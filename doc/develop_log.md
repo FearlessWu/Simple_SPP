@@ -21,7 +21,7 @@ typedef enum
 ## **4、通用函数**
 
 ## **5、代码提交规范**
-1）代码本地commit后，不直接push，先fetch，然后rebase，若有冲突，先处理玩冲突在push。这一点非常重要！<br/>2）每次提交必须添加massage，并按照一定的格式进行填写，方便版本回溯：
+1）代码本地commit后，不直接push，先fetch，然后rebase，若有冲突，先处理完冲突再push。这一点非常重要！<br/>2）每次提交必须添加massage，并按照一定的格式进行填写，方便版本回溯：
 ```
 [ADD/FIX/ENC] [some decription for this commit balabala....] [author name]
 ADD：增加某些功能/文件
