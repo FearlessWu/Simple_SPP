@@ -21,6 +21,7 @@
 #include "common.h"
 #include "stdbool.h"
 #include "stdlib.h"
+#include "lib.h"
 
 #define FREQ_NUM    (2)     // number of frequency
 #define MAXOBS      (256)   // the maximum observation number
@@ -31,24 +32,29 @@
 #define MAXGALNUM   (30)
 #define MAXBDSNUM   (50)
 
+#define SYS_NON     (0x00)
+#define SYS_GPS     (0x01)
+#define SYS_GLO     (0x02)
+#define SYS_GAL     (0x04)
+#define SYS_BDS     (0x08)
+
 #define DEBUG
 
 /* observation of a single satellite */
 typedef struct
 {
-    fp64        time;               /*!< recevier observes time*/
-    uint32_t    sys_id;
-    uint32_t    sv_id;
+    int32_t     sys_id;
+    int32_t     sv_id;
     fp64        tran_time;          /*!< satellite signal transmit time */
     fp64        P[FREQ_NUM];
     fp64        L[FREQ_NUM];
     fp64        D[FREQ_NUM];
-    int8_t      P_status[FREQ_NUM]; /*!< the status of pseudorange. It can show whether pseudorange can use or not */
-    int8_t      L_status[FREQ_NUM]; /*!< the status of phase. It can show whether phase can use or not */
-    int8_t      D_status[FREQ_NUM]; /*!< the status of doppler. It can show whether doppler can use or not */
-    fp64        CN0[FREQ_NUM];
+    int32_t     P_status[FREQ_NUM]; /*!< the status of pseudorange. It can show whether pseudorange can use or not */
+    int32_t     L_status[FREQ_NUM]; /*!< the status of phase. It can show whether phase can use or not */
+    int32_t     D_status[FREQ_NUM]; /*!< the status of doppler. It can show whether doppler can use or not */
+    fp64        CN0[FREQ_NUM];      /*!< signal strength */
     fp64        elv[FREQ_NUM];
-    uint8_t     LLI[FREQ_NUM]; 
+    int32_t     LLI[FREQ_NUM]; 
 } obs_sv_t;
 
 
@@ -68,10 +74,12 @@ typedef struct
 /* all satellite observation in one epoch */
 typedef struct
 {
+    fp64        time;           /*!< recevier observes time */
+    fp64        ep[6];          /*!< epoch time */
+    uint8_t     epoch_flag;     /*!< 0: OK, 1:power failure between previous and current epoch */
+    fp64        rcv_clk_offset; /*!< Receiver clock offset, uint: sec */
     int32_t     obs_num;        /*!< the number of actual observation */
-    int32_t     obs_idx_pos;    /*!< current epoch obs data ordinal number in the whole obs data */
-    int32_t     cur_mem_size;   /*!< current obs malloc memory size */
-    obs_sv_t   *obs;            /*!< all satellite obs data in obs file */
+    obs_sv_t    obs[60];            /*!< all satellite obs data in obs file */
     rcv_info_t  rcv_info;       /*!< record receiver information */
 } obs_epoch_t;
 
@@ -142,7 +150,7 @@ typedef struct
 } log_t;
 
 /* global variable */
-extern log_t      log;
+extern log_t      loger;
 extern opt_file_t opt_file;
 extern FILE      *obs_fp_ptr;
 

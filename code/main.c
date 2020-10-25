@@ -2,7 +2,7 @@
 #include "spp_sol.h"
 #include "io.h"
 
-log_t log = { 0 }; // global variable
+log_t loger = { 0 }; // global variable
 
 RETURN_STATUS main(int32_t args, char *argv[])
 {

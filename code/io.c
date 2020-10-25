@@ -4,7 +4,7 @@
 #include <string.h>
 
 /* global variable */
-extern log_t log;
+extern log_t loger;
 extern FILE* obs_fp_ptr;
 
 /* remove the newline symbol */
@@ -57,7 +57,7 @@ RETURN_STATUS read_opt_file(opt_file_t  *opt_file, char *opt_path)
     FILE *opt_fp;
     if (!(opt_fp = fopen(opt_path, "r"))) 
     {
-        if (log.is_open)
+        if (loger.is_open)
         {
             record_to_log(FATAL, CANT_READ_OPT_FILE);
         }
@@ -76,7 +76,7 @@ RETURN_STATUS read_default_opt_file(opt_file_t *opt_file)
 	FILE* opt_fp;
 	if (!(opt_fp = fopen("..//Simple_SPP//SPP.opt", "r")))
 	{
-		if (log.is_open)
+		if (loger.is_open)
 		{
 			record_to_log(FATAL, CANT_READ_OPT_FILE);
 		}
@@ -91,14 +91,14 @@ RETURN_STATUS read_default_opt_file(opt_file_t *opt_file)
 }
 void open_log_file()
 {
-    if (!(log.log_file = fopen("..//Simple_SPP//log.txt","w")))
+    if (!(loger.log_file = fopen("..//Simple_SPP//log.txt","w")))
     {
-        log.is_open = false;
+        loger.is_open = false;
         printf("log file open fail!\n");
     }
     else
     {
-        log.is_open = true;
+        loger.is_open = true;
         printf("log file open success!\n");
     }
     
@@ -106,15 +106,15 @@ void open_log_file()
 
 void close_log_file()
 {
-    if (log.is_open)
+    if (loger.is_open)
     {
-        fclose(log.log_file);
+        fclose(loger.log_file);
     }
 }
 
 void record_to_log(error_level_t err_level, error_code_t err_code)
 {
-    if (!log.is_open)
+    if (!loger.is_open)
     {
         return;
     }
@@ -123,12 +123,12 @@ void record_to_log(error_level_t err_level, error_code_t err_code)
     switch (err_level)
     {
     case WARNING:
-        fprintf(log.log_file, "WARNING : ");
-        fflush(log.log_file);
+        fprintf(loger.log_file, "WARNING : ");
+        fflush(loger.log_file);
         break;
     case FATAL:
-        fprintf(log.log_file, "FATAL ERR: ");
-        fflush(log.log_file);
+        fprintf(loger.log_file, "FATAL ERR: ");
+        fflush(loger.log_file);
         break;
     default:
         break; // do not except jump into here!   
@@ -138,16 +138,16 @@ void record_to_log(error_level_t err_level, error_code_t err_code)
     switch (err_code)
     {
     case NO_OBS_FILE:
-        fprintf(log.log_file, "ERROR CODE = %2d, NO OBS FILE.\n", err_code);
-        fflush(log.log_file);
+        fprintf(loger.log_file, "ERROR CODE = %2d, NO OBS FILE.\n", err_code);
+        fflush(loger.log_file);
         break;
     case NO_NAV_FILE:
-        fprintf(log.log_file, "ERROR CODE = %2d, NO NAV FILE.\n", err_code);
-        fflush(log.log_file);
+        fprintf(loger.log_file, "ERROR CODE = %2d, NO NAV FILE.\n", err_code);
+        fflush(loger.log_file);
         break;
     case CANT_READ_OPT_FILE:
-		fprintf(log.log_file, "ERROR CODE = %2d, CANT_READ_OPT_FILE\n", err_code);
-		fflush(log.log_file);
+		fprintf(loger.log_file, "ERROR CODE = %2d, CANT_READ_OPT_FILE\n", err_code);
+		fflush(loger.log_file);
 		break;
     default:
         break; // do not except jump into here!  
@@ -176,6 +176,10 @@ RETURN_STATUS read_option_file(opt_file_t *opt_file, int32_t args, char *opt_fil
 
 static RETURN_STATUS read_rinex_obs_header(char *obs_file_path, rcv_info_t *rcv_info, uint8_t *is_open_obs_file)
 {
+    if (*is_open_obs_file)
+    {
+        return RET_SUCCESS;
+    }
 	if (!(obs_fp_ptr = fopen(obs_file_path, "r")))
 	{
 		// TODO: do something when open obs file fail!
@@ -348,10 +352,163 @@ static RETURN_STATUS read_rinex_obs_header(char *obs_file_path, rcv_info_t *rcv_
 
     return RET_FAIL;
 }
-
-static void read_rinex_obs_body(obs_epoch_t *obs, uint8_t *is_run)
+static void find_obs_type_idx(int32_t *gps_type_idx, char **gps_type, obs_epoch_t *obs)
 {
+    int32_t i;
+    int32_t count = 0;
+    for (i = 0; i < 20; ++i)
+    {
+        if (!strcmp(obs->rcv_info.gps_obs_type[i], gps_type[0]))
+        {
+            gps_type_idx[0] = i + 1;
+            count++;
+            if (count == 2)
+            {
+                return;
+            }
+        }
 
+        if (!strcmp(obs->rcv_info.gps_obs_type[i], gps_type[1]))
+        {
+            gps_type_idx[1] = i + 1;
+            count++;
+            if (count == 2)
+            {
+                return;
+            }
+        }
+    }
+}
+static RETURN_STATUS read_rinex_obs_body(obs_epoch_t *obs, uint8_t *is_run)
+{
+    char    buff[1024];
+    char    sub_buff[1024];
+    int32_t buff_size = 1024;
+    int32_t i;
+    int32_t sv_num;
+    char    *gps_type[2] = { "C1C\0","C2S\0" };
+    int32_t gps_type_idx[2] = { 0 };
+
+    find_obs_type_idx(gps_type_idx, gps_type, obs);
+
+    while (fgets(buff, buff_size, obs_fp_ptr))
+    {
+        if (strstr(buff, ">") == NULL)
+        {
+            return RET_FAIL;
+        }
+        
+        /* read epoch time*/
+        sv_num = 0;
+        strncpy(sub_buff, buff + 2, 4);
+        add_stop_char(sub_buff, 4);
+        obs->ep[0] = atof(sub_buff);
+        for (i = 1; i < 5; ++i)
+        {
+            int8_t k = (i - 1) * 3;
+            strncpy(sub_buff, buff + 7 + k, 2);
+            add_stop_char(sub_buff, 2);
+            obs->ep[i] = atof(sub_buff);
+        }
+        strncpy(sub_buff, buff + 18, 11);
+        add_stop_char(sub_buff, 11);
+        obs->ep[5] = atof(sub_buff);
+
+        obs->time = epoch2time(obs->ep);
+
+        strncpy(sub_buff, buff + 31, 1);
+        add_stop_char(sub_buff, 1);
+        obs->epoch_flag = atoi(sub_buff);
+
+        strncpy(sub_buff, buff + 32, 3);
+        add_stop_char(sub_buff, 3);
+        sv_num = atoi(sub_buff);
+#if 0
+        if (!(obs->obs = (obs_sv_t *)malloc(sizeof(obs_sv_t) * sv_num)))
+        {
+            // TODO: do something informs developer
+            return RET_FAIL;
+        }
+#endif
+        obs->obs_num = 0;
+        for (i = 0; i < sv_num; ++i)
+        {
+            if (fgets(buff, buff_size, obs_fp_ptr) != NULL)
+            {
+                strncpy(sub_buff, buff, 1);
+                if (sub_buff[0] != 'G')
+                {
+                    continue;
+                }
+                obs->obs[obs->obs_num].sys_id = SYS_GPS;
+                strncpy(sub_buff, buff + 1, 2);
+                add_stop_char(sub_buff, 2);
+                obs->obs[obs->obs_num].sv_id = atoi(sub_buff);
+
+                int32_t j;
+                for (j = 0; j < 2; ++j)
+                {
+                    /* pseudorange */
+                    int32_t k = 3 + (gps_type_idx[j] - 1) * 16;
+                    strncpy(sub_buff, buff + k, 14);
+                    add_stop_char(sub_buff, 14);
+                    obs->obs[obs->obs_num].P[j] = atof(sub_buff);
+                    if (fabs(obs->obs[obs->obs_num].P[j]) > 0.001)
+                    {
+                        obs->obs[obs->obs_num].P_status[j] = USE;
+                    }
+                    else
+                    {
+                        obs->obs[obs->obs_num].P_status[j] = NOT_USE;
+                    }
+                    
+                    /* phase */
+                    k += 16;
+                    strncpy(sub_buff, buff + k, 14);
+                    add_stop_char(sub_buff, 14);
+                    obs->obs[obs->obs_num].L[j] = atof(sub_buff);
+                    if (fabs(obs->obs[obs->obs_num].L[j]) > 0.001)
+                    {
+                        obs->obs[obs->obs_num].L_status[j] = USE;
+                    }
+                    else
+                    {
+                        obs->obs[obs->obs_num].L_status[j] = NOT_USE;
+                    }
+
+                    /* LLI */
+                    strncpy(sub_buff, buff + k +14, 1);
+                    add_stop_char(sub_buff, 1);
+                    obs->obs[obs->obs_num].LLI[j] = atoi(sub_buff);
+
+                    /* signal strength */
+                    k += 16;
+                    strncpy(sub_buff, buff + k, 14);
+                    add_stop_char(sub_buff, 14);
+                    obs->obs[obs->obs_num].D[j] = atof(sub_buff);
+                    if (fabs(obs->obs[obs->obs_num].D[j]) > 0.001)
+                    {
+                        obs->obs[obs->obs_num].D_status[j] = USE;
+                    }
+                    else
+                    {
+                        obs->obs[obs->obs_num].D_status[j] = NOT_USE;
+                    }
+
+                    /* signal strength */
+                    k += 16;
+                    strncpy(sub_buff, buff + k, 14);
+                    add_stop_char(sub_buff, 14);
+                    obs->obs[obs->obs_num].CN0[j] = atof(sub_buff);
+                }
+            }
+            obs->obs_num++;
+        }
+        return RET_SUCCESS;
+    }
+
+    *is_run = false;
+    return RET_FAIL;
 }
 RETURN_STATUS load_curr_rinex_obs(char *obs_file_path, obs_epoch_t *obs, uint8_t *is_open_obs_file, uint8_t *is_run)
 {

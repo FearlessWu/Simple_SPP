@@ -1,4 +1,6 @@
 #pragma once
+#include <math.h>
+
 /* redefine data type to adapt other platform */
 typedef signed char         int8_t;
 typedef unsigned char       uint8_t;
