@@ -31,6 +31,8 @@
 #define MAXGALNUM   (30)
 #define MAXBDSNUM   (50)
 
+#define DEBUG
+
 /* observation of a single satellite */
 typedef struct
 {
@@ -49,12 +51,30 @@ typedef struct
     uint8_t     LLI[FREQ_NUM]; 
 } obs_sv_t;
 
+
+/* receiver information */
+typedef struct
+{
+	char sta_name[60];
+    char rcv_type[20];
+	fp64 appro_pos[3];          /*!< approximate ecef pos */
+    fp64 atx_offset[3];         /*!< antenna delta: H/E/N */
+    char gps_obs_type[20][4];
+    char glo_obs_type[20][4];
+    char gal_obs_type[20][4];
+    char bds_obs_type[20][4];
+} rcv_info_t;
+
 /* all satellite observation in one epoch */
 typedef struct
 {
     int32_t     obs_num;        /*!< the number of actual observation */
-    obs_sv_t    obs[MAXOBS];    /*!< the maximum array to restore all observation*/
+    int32_t     obs_idx_pos;    /*!< current epoch obs data ordinal number in the whole obs data */
+    int32_t     cur_mem_size;   /*!< current obs malloc memory size */
+    obs_sv_t   *obs;            /*!< all satellite obs data in obs file */
+    rcv_info_t  rcv_info;       /*!< record receiver information */
 } obs_epoch_t;
+
 
 typedef struct
 {
@@ -88,6 +108,7 @@ typedef struct
     char nav_file[256];
 } opt_file_t;
 
+
 typedef enum
 {
     NOT_USE = 0,
@@ -110,16 +131,19 @@ typedef enum
 typedef enum
 {
     WARNING = 0,
-    FATAL    = 1
+    FATAL   = 1
 } error_level_t;
 
 
 typedef struct
 {
-    bool_t is_open;
-    FILE *log_file;
+    bool_t  is_open;
+    FILE   *log_file;
 } log_t;
 
 /* global variable */
-extern log_t log;
+extern log_t      log;
 extern opt_file_t opt_file;
+extern FILE      *obs_fp_ptr;
+
+extern RETURN_STATUS spp_proc(opt_file_t *opt_file);
