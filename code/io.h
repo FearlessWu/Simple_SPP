@@ -12,6 +12,7 @@ extern void close_log_file();
 
 extern RETURN_STATUS read_option_file(opt_file_t *opt_file, int32_t args, char *opt_file_path);
 
+extern RETURN_STATUS read_rinex_nav_data(char* nav_file_path, eph_t* all_eph_info, uint8_t* is_open_nav_file);
 extern RETURN_STATUS load_curr_rinex_obs(char *obs_file_path, obs_epoch_t *obs, uint8_t *is_open_obs_file, uint8_t *is_run);
 
 extern RETURN_STATUS load_broadcast_eph(char *nav_file_path, eph_t *eph);

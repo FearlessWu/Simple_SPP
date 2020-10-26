@@ -6,6 +6,7 @@
 /* global variable */
 extern log_t loger;
 extern FILE* obs_fp_ptr;
+extern FILE* nav_fp_ptr;
 
 /* remove the newline symbol */
 static void remove_newline_symbol(char* in)
@@ -174,7 +175,115 @@ RETURN_STATUS read_option_file(opt_file_t *opt_file, int32_t args, char *opt_fil
     return read_status;
 }
 
-static RETURN_STATUS read_rinex_obs_header(char *obs_file_path, rcv_info_t *rcv_info, uint8_t *is_open_obs_file)
+RETURN_STATUS read_rinex_nav_data(char* nav_file_path, eph_t* all_eph_info, uint8_t* is_open_nav_file)
+{
+    char string[90];
+    char nav_header[64] = { "END OF HEADER" };
+    eph_sat_t temp_eph;
+    fp64 temp;
+    int16_t  lines = 0;
+    uint16_t i = 0;
+    uint32_t svid;
+    FILE* nav_fp_ptr;
+    
+    if (!(nav_fp_ptr = fopen(nav_file_path, "r")))
+	{
+		// TODO: debugout no nav file!
+		return RET_FAIL;
+	}
+    *is_open_nav_file = true;
+
+    memset(&all_eph_info, 0, sizeof(eph_t));
+    svid =  0;
+    while (fgets(string, 89, nav_fp_ptr))
+    {
+        if (strstr(string, nav_header, strlen(nav_header)))
+        {
+            break;
+        }
+    }
+    while (fgets(string, 89, nav_fp_ptr))
+    {
+        
+        if(string[0] == 'G')
+        { 
+            lines = 5;
+            memset(&temp_eph, 0, sizeof(eph_sat_t));
+            temp_eph.nav_valid = 1;
+            temp_eph.sys_id = 0;
+            if (sscanf(string + strlen('G'), "%d %d %d %d %d %d %d %lf %lf %lf",
+                &temp_eph.sv_id, &temp_eph.time[0], &temp_eph.time[1], &temp_eph.time[2], &temp_eph.time[3], &temp_eph.time[4], &temp_eph.Toc,
+                &temp_eph.sv_clk[0], &temp_eph.sv_clk[1], &temp_eph.sv_clk[2]) != 10)
+            {
+                temp_eph.nav_valid = 0;
+                continue;
+            }
+            
+            if (svid = temp_eph.sv_id)
+            {
+                i += 1;
+            }
+            else
+            {
+                svid = temp_eph.sv_id;
+                i = 0;
+            }
+
+           while(lines && temp_eph.nav_valid)
+            {
+               fgets(string, 89, nav_fp_ptr);
+               switch (6 - lines)
+               {
+                case 1:
+                    if (sscanf(string, "%lf %lf %lf %lf",
+                        &temp, &temp_eph.CrS, &temp_eph.DeltaN, &temp_eph.M0) != 4)
+                    {
+                        temp_eph.nav_valid = 0;
+                    }
+                    break;
+                case 2:
+                    if (sscanf(string, "%lf %lf %lf %lf",
+                        &temp_eph.CuC, &temp_eph.E, &temp_eph.CuS, &temp_eph.rootA) != 4)
+                    {
+                        temp_eph.nav_valid = 0;
+                    }
+                    break;
+                case 3:
+                    if (sscanf(string, "%lf %lf %lf %lf",
+                        &temp_eph.Toe, &temp_eph.CiC, &temp_eph.Omega0, &temp_eph.CiS) != 4)
+                    {
+                        temp_eph.nav_valid = 0;
+                    }
+                    break;
+                case 4:
+                    if (sscanf(string, "%lf %lf %lf %lf",
+                        &temp_eph.I0, &temp_eph.CrC, &temp_eph.Omega, &temp_eph.OmegaDot) != 4)
+                    {
+                        temp_eph.nav_valid = 0;
+                    }
+                    break;
+                case 5:
+                    if (sscanf(string, "%lf %lf %lf %lf",
+                        &temp_eph.Idot, &temp, &temp, &temp) != 4)
+                    {
+                        temp_eph.nav_valid = 0;
+                    }
+                    break;
+                default:
+                    break;
+               }
+               lines -= 1;
+
+            }
+           if(temp_eph.nav_valid)
+               all_eph_info->gps_eph[temp_eph.sv_id - 1][i] = temp_eph;
+        }
+    }
+   
+    return RET_SUCCESS;
+}
+
+static RETURN_STATUS read_rinex_obs_header(char* obs_file_path, rcv_info_t* rcv_info, uint8_t* is_open_obs_file)
 {
     if (*is_open_obs_file)
     {

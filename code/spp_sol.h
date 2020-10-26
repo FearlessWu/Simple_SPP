@@ -8,7 +8,7 @@
   * @history
   * Version      Date            Author          Modification
   * V1.0.0       Oct-24-2020     Wyatt Wu        1. build this file and some foundational content.
-  * 
+  * V1.0.0       Oct-25-2020     PQiu            2. build the struct of eph.
   @verbatim
   =====================================================================================================
 
@@ -23,9 +23,10 @@
 #include "stdlib.h"
 #include "lib.h"
 
+#define MAXSYS      (4)     // number of system
 #define FREQ_NUM    (2)     // number of frequency
 #define MAXOBS      (256)   // the maximum observation number
-#define MAXBROEPH   (288)   // the maximun number of epoch of broadcast ephemeris
+#define MAXBROEPH   (30)   // the maximun number of epoch of broadcast ephemeris
 
 #define MAXGPSNUM   (32)
 #define MAXGLONUM   (27)
@@ -86,9 +87,32 @@ typedef struct
 
 typedef struct
 {
-    fp64    time;
-    // TODO: satellite orbit parameters
+    uint8_t     nav_valid;     /*!< 1: nav file is intact; 0: nav file has some wrong*/
+    int32_t     time[5];       /*!< Year, Month, Day, Hour, Minute*/
+    uint32_t    sys_id;
+    uint32_t    sv_id;          
+    fp64        Toe;           /*!< ephemeris reference time*/
+    fp64        M0;            /*!< 16 parameters of eph including Toe*/
+    fp64        DeltaN;
+    fp64        E;
+    fp64        rootA;
+    fp64        Omega0;
+    fp64        I0;
+    fp64        Omega;
+    fp64        OmegaDot;
+    fp64        Idot;
+    fp64        CuC;
+    fp64        CuS;
+    fp64        CrC;
+    fp64        CrS;
+    fp64        CiC;
+    fp64        CiS;
+    uint32_t    Toc;           /*!< clock data reference time in seconds*/
+    fp64        sv_clk[3];     /*!< the SV clock bais, drift and drift rate: Af0, Af1, Af2*/
+    fp64        Tgd;
+    // TODO: satellite orbit parameters of bds, glo and gal 
 } eph_sat_t;
+
 
 typedef struct
 {
