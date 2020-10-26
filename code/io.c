@@ -175,14 +175,13 @@ RETURN_STATUS read_option_file(opt_file_t *opt_file, int32_t args, char *opt_fil
     return read_status;
 }
 
-RETURN_STATUS read_rinex_nav_data(char* nav_file_path, eph_t* all_eph_info, uint8_t* is_open_nav_file)
+RETURN_STATUS read_rinex_nav_data(char *nav_file_path, eph_t *all_eph_info, uint8_t *is_open_nav_file)
 {
-    char string[90];
+    char string[90], p[20];
     char nav_header[64] = { "END OF HEADER" };
     eph_sat_t temp_eph;
-    fp64 temp;
     int16_t  lines = 0;
-    uint16_t i = 0;
+    uint32_t i = 0, j = 0;
     uint32_t svid;
     FILE* nav_fp_ptr;
     
@@ -193,11 +192,11 @@ RETURN_STATUS read_rinex_nav_data(char* nav_file_path, eph_t* all_eph_info, uint
 	}
     *is_open_nav_file = true;
 
-    memset(&all_eph_info, 0, sizeof(eph_t));
+    memset(all_eph_info, 0, sizeof(eph_t));
     svid =  0;
     while (fgets(string, 89, nav_fp_ptr))
     {
-        if (strstr(string, nav_header, strlen(nav_header)))
+        if (strstr(string, nav_header))
         {
             break;
         }
@@ -207,19 +206,39 @@ RETURN_STATUS read_rinex_nav_data(char* nav_file_path, eph_t* all_eph_info, uint
         
         if(string[0] == 'G')
         { 
-            lines = 5;
+            lines = 6;
             memset(&temp_eph, 0, sizeof(eph_sat_t));
             temp_eph.nav_valid = 1;
-            temp_eph.sys_id = 0;
-            if (sscanf(string + strlen('G'), "%d %d %d %d %d %d %d %lf %lf %lf",
-                &temp_eph.sv_id, &temp_eph.time[0], &temp_eph.time[1], &temp_eph.time[2], &temp_eph.time[3], &temp_eph.time[4], &temp_eph.Toc,
-                &temp_eph.sv_clk[0], &temp_eph.sv_clk[1], &temp_eph.sv_clk[2]) != 10)
-            {
-                temp_eph.nav_valid = 0;
-                continue;
+            temp_eph.sys_id = SYS_GPS;
+
+            strncpy(p, string + 1, 2);
+            add_stop_char(p, 2);
+            temp_eph.sv_id = atoi(p);
+            strncpy(p, string + 4, 4);
+            add_stop_char(p, 4);
+            temp_eph.time[0] = atoi(p);
+
+            for (j = 0; j < 4; ++j)
+            {   
+                int8_t k = j * 3;
+                strncpy(p, string + 9 + k, 2);
+                add_stop_char(p, 2);
+                temp_eph.time[ j + 1] = atoi(p);
             }
-            
-            if (svid = temp_eph.sv_id)
+
+            strncpy(p, string + 21, 2);
+            add_stop_char(p, 2);
+            temp_eph.Toc = atoi(p);
+
+            for (j = 0; j < 3; ++j)
+            {
+                int8_t k = j * 19;
+                strncpy(p, string + 23 + k, 19);
+                add_stop_char(p, 19);
+                temp_eph.sv_clk[j] = atof(p);
+            }
+                                    
+            if (svid == temp_eph.sv_id)
             {
                 i += 1;
             }
@@ -232,42 +251,82 @@ RETURN_STATUS read_rinex_nav_data(char* nav_file_path, eph_t* all_eph_info, uint
            while(lines && temp_eph.nav_valid)
             {
                fgets(string, 89, nav_fp_ptr);
-               switch (6 - lines)
+               switch (7 - lines)
                {
                 case 1:
-                    if (sscanf(string, "%lf %lf %lf %lf",
-                        &temp, &temp_eph.CrS, &temp_eph.DeltaN, &temp_eph.M0) != 4)
-                    {
-                        temp_eph.nav_valid = 0;
-                    }
+                   
+                    strncpy(p, string + 4 + 19 * 1, 19);
+                    add_stop_char(p, 19);
+                    temp_eph.CrS = atof(p);
+                    strncpy(p, string + 4 + 19 * 2, 19);
+                    add_stop_char(p, 19);
+                    temp_eph.DeltaN = atof(p);
+                    strncpy(p, string + 4 + 19 * 3, 19);
+                    add_stop_char(p, 19);
+                    temp_eph.M0 = atof(p);
+                    
                     break;
                 case 2:
-                    if (sscanf(string, "%lf %lf %lf %lf",
-                        &temp_eph.CuC, &temp_eph.E, &temp_eph.CuS, &temp_eph.rootA) != 4)
-                    {
-                        temp_eph.nav_valid = 0;
-                    }
+
+                    strncpy(p, string + 4 + 19 * 0, 19);
+                    add_stop_char(p, 19);
+                    temp_eph.CuC = atof(p);
+                    strncpy(p, string + 4 + 19 * 1, 19);
+                    add_stop_char(p, 19);
+                    temp_eph.E = atof(p);
+                    strncpy(p, string + 4 + 19 * 2, 19);
+                    add_stop_char(p, 19);
+                    temp_eph.CuS = atof(p);
+                    strncpy(p, string + 4 + 19 * 3, 19);
+                    add_stop_char(p, 19);
+                    temp_eph.rootA = atof(p);
+
                     break;
                 case 3:
-                    if (sscanf(string, "%lf %lf %lf %lf",
-                        &temp_eph.Toe, &temp_eph.CiC, &temp_eph.Omega0, &temp_eph.CiS) != 4)
-                    {
-                        temp_eph.nav_valid = 0;
-                    }
+
+                    strncpy(p, string + 4 + 19 * 0, 19);
+                    add_stop_char(p, 19);
+                    temp_eph.Toe = atof(p);
+                    strncpy(p, string + 4 + 19 * 1, 19);
+                    add_stop_char(p, 19);
+                    temp_eph.CiC = atof(p);
+                    strncpy(p, string + 4 + 19 * 2, 19);
+                    add_stop_char(p, 19);
+                    temp_eph.Omega0 = atof(p);
+                    strncpy(p, string + 4 + 19 * 3, 19);
+                    add_stop_char(p, 19);
+                    temp_eph.CiS = atof(p);
+
                     break;
                 case 4:
-                    if (sscanf(string, "%lf %lf %lf %lf",
-                        &temp_eph.I0, &temp_eph.CrC, &temp_eph.Omega, &temp_eph.OmegaDot) != 4)
-                    {
-                        temp_eph.nav_valid = 0;
-                    }
+
+                    strncpy(p, string + 4 + 19 * 0, 19);
+                    add_stop_char(p, 19);
+                    temp_eph.I0 = atof(p);
+                    strncpy(p, string + 4 + 19 * 1, 19);
+                    add_stop_char(p, 19);
+                    temp_eph.CrC = atof(p);
+                    strncpy(p, string + 4 + 19 * 2, 19);
+                    add_stop_char(p, 19);
+                    temp_eph.Omega = atof(p);
+                    strncpy(p, string + 4 + 19 * 3, 19);
+                    add_stop_char(p, 19);
+                    temp_eph.OmegaDot = atof(p);                    
+
                     break;
                 case 5:
-                    if (sscanf(string, "%lf %lf %lf %lf",
-                        &temp_eph.Idot, &temp, &temp, &temp) != 4)
-                    {
-                        temp_eph.nav_valid = 0;
-                    }
+
+                    strncpy(p, string + 4 + 19 * 0, 19);
+                    add_stop_char(p, 19);
+                    temp_eph.Idot = atof(p);
+
+                    break;
+                case 6:
+
+                    strncpy(p, string + 4 + 19 * 2, 19);
+                    add_stop_char(p, 19);
+                    temp_eph.Tgd = atof(p);
+
                     break;
                 default:
                     break;
@@ -275,8 +334,12 @@ RETURN_STATUS read_rinex_nav_data(char* nav_file_path, eph_t* all_eph_info, uint
                lines -= 1;
 
             }
-           if(temp_eph.nav_valid)
-               all_eph_info->gps_eph[temp_eph.sv_id - 1][i] = temp_eph;
+
+           if (temp_eph.nav_valid)
+           {
+               if (svid >= 1 && i >= 0)
+                   memcpy(&all_eph_info->gps_eph[svid - 1][i], &temp_eph, sizeof(temp_eph));
+           }            
         }
     }
    
@@ -627,8 +690,3 @@ RETURN_STATUS load_curr_rinex_obs(char *obs_file_path, obs_epoch_t *obs, uint8_t
 	return RET_SUCCESS;
 }
 
-RETURN_STATUS load_broadcast_eph(char* nav_file_path, eph_t* eph)
-{
-	// TODO: read nav file
-	return RET_SUCCESS;
-}
