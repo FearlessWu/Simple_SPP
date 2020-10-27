@@ -7,6 +7,7 @@
 extern log_t loger;
 extern FILE* obs_fp_ptr;
 extern FILE* nav_fp_ptr;
+extern const char *error_message[];
 
 /* remove the newline symbol */
 static void remove_newline_symbol(char* in)
@@ -60,7 +61,7 @@ RETURN_STATUS read_opt_file(opt_file_t  *opt_file, char *opt_path)
     {
         if (loger.is_open)
         {
-            record_to_log(FATAL, CANT_READ_OPT_FILE);
+            print_log(NULL, CANT_READ_OPT_FILE, error_message[CANT_READ_OPT_FILE]);
         }
 
         return RET_FAIL;
@@ -79,7 +80,7 @@ RETURN_STATUS read_default_opt_file(opt_file_t *opt_file)
 	{
 		if (loger.is_open)
 		{
-			record_to_log(FATAL, CANT_READ_OPT_FILE);
+            print_log(NULL, CANT_READ_OPT_FILE, error_message[CANT_READ_OPT_FILE]);
 		}
 
 		return RET_FAIL;
@@ -92,7 +93,7 @@ RETURN_STATUS read_default_opt_file(opt_file_t *opt_file)
 }
 void open_log_file()
 {
-    if (!(loger.log_file = fopen("..//Simple_SPP//log.txt","w")))
+    if (!(loger.log_fp = fopen("..//Simple_SPP//log.txt","w")))
     {
         loger.is_open = false;
         printf("log file open fail!\n");
@@ -109,52 +110,35 @@ void close_log_file()
 {
     if (loger.is_open)
     {
-        fclose(loger.log_file);
+        fclose(loger.log_fp);
     }
 }
 
-void record_to_log(error_level_t err_level, error_code_t err_code)
+/**
+  * @brief      record error type and its cause to log file
+  * @author     Wyatt wu
+  * @param[in]  *time    :  error happens time
+  * @param[in]  err_code :  error code. According to error code, we can report the error cause to user.
+  * @param[in]  *message :  char type message to tell error infomation
+  * @retval
+ */
+void print_log(fp64 *time, error_code_t err_code, const char *message)
 {
     if (!loger.is_open)
     {
         return;
     }
-
-    /* record error level */
-    switch (err_level)
+    if (time == NULL)
     {
-    case WARNING:
-        fprintf(loger.log_file, "WARNING : ");
-        fflush(loger.log_file);
-        break;
-    case FATAL:
-        fprintf(loger.log_file, "FATAL ERR: ");
-        fflush(loger.log_file);
-        break;
-    default:
-        break; // do not except jump into here!   
+        fprintf(loger.log_fp, ",,,,,,,,,,,,Error code: %d, %s\n", err_code, message);
     }
-
-    /* record error detail */
-    switch (err_code)
+    else
     {
-    case NO_OBS_FILE:
-        fprintf(loger.log_file, "ERROR CODE = %2d, NO OBS FILE.\n", err_code);
-        fflush(loger.log_file);
-        break;
-    case NO_NAV_FILE:
-        fprintf(loger.log_file, "ERROR CODE = %2d, NO NAV FILE.\n", err_code);
-        fflush(loger.log_file);
-        break;
-    case CANT_READ_OPT_FILE:
-		fprintf(loger.log_file, "ERROR CODE = %2d, CANT_READ_OPT_FILE\n", err_code);
-		fflush(loger.log_file);
-		break;
-    default:
-        break; // do not except jump into here!  
+        fprintf(loger.log_fp, "%9.2f,,,Error code: %d, %s\n", *time, err_code, message);
     }
 
 }
+
 
 RETURN_STATUS read_option_file(opt_file_t *opt_file, int32_t args, char *opt_file_path)
 {

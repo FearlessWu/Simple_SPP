@@ -1,3 +1,20 @@
+/**
+  **********************************(C) COPYRIGHT 2020 Wyatt Wu/PQiu***********************************
+  * @file        io.c/h
+  * @brief       The header file is used to define various input and output functions, and the specific 
+  *              function implementation is written in the io.c file
+  * @note
+  * @history
+  * Version      Date               Author               Modification
+  * V1.0.0       Oct-25-2020     Wyatt Wu/PQiu        1. establih this file
+  @verbatim
+  =====================================================================================================
+
+  =====================================================================================================
+  @endverbatim
+  ************************************(C) COPYRIGHT 2020 Wyatt Wu/PQiu***********************************
+  */
+
 #pragma once
 #include <string.h>
 #include "common.h"
@@ -14,15 +31,7 @@ extern void close_log_file();
 extern RETURN_STATUS read_option_file(opt_file_t *opt_file, int32_t args, char *opt_file_path);
 
 extern RETURN_STATUS read_rinex_nav_data(char *nav_file_path, eph_t *all_eph_info, uint8_t *is_open_nav_file);
+
 extern RETURN_STATUS load_curr_rinex_obs(char *obs_file_path, obs_epoch_t *obs, uint8_t *is_open_obs_file, uint8_t *is_run);
 
-extern RETURN_STATUS load_broadcast_eph(char *nav_file_path, eph_t *eph);
-
-/**
-  * @brief      record error type and its cause to log file
-  * @author     Wyatt wu
-  * @param[in]  err_level:  error serious level: WARNING --program can still run,  FATAL --program can not run
-  * @param[in]  err_code :  error code. According to error code, we can report the error cause to user.
-  * @retval 
- */
-extern void record_to_log(error_level_t err_level, error_code_t err_code);
+extern void print_log(fp64* time, error_code_t err_code, const char* message);

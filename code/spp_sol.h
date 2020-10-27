@@ -8,7 +8,7 @@
   * @history
   * Version      Date            Author          Modification
   * V1.0.0       Oct-24-2020     Wyatt Wu        1. build this file and some foundational content.
-  * V1.0.0       Oct-25-2020     PQiu            2. build the struct of eph.
+  * V1.0.0       Oct-25-2020     PQiu            1. build the struct of eph.
   @verbatim
   =====================================================================================================
 
@@ -46,7 +46,6 @@ typedef struct
 {
     int32_t     sys_id;
     int32_t     sv_id;
-    fp64        tran_time;          /*!< satellite signal transmit time */
     fp64        P[FREQ_NUM];
     fp64        L[FREQ_NUM];
     fp64        D[FREQ_NUM];
@@ -80,7 +79,7 @@ typedef struct
     uint8_t     epoch_flag;     /*!< 0: OK, 1:power failure between previous and current epoch */
     fp64        rcv_clk_offset; /*!< Receiver clock offset, uint: sec */
     int32_t     obs_num;        /*!< the number of actual observation */
-    obs_sv_t    obs[60];            /*!< all satellite obs data in obs file */
+    obs_sv_t    obs[60];        /*!< all satellite obs data in obs file */
     rcv_info_t  rcv_info;       /*!< record receiver information */
 } obs_epoch_t;
 
@@ -160,6 +159,13 @@ typedef enum
     CANT_READ_OPT_FILE = 2
 } error_code_t;
 
+/* error message accord to error code */
+static const char *error_message[] = {
+    "FATAL: NO_OBS_FILE",
+    "FATAL: NO_NAV_FILE",
+    "FATAL: CANT_READ_OPT_FILE"
+};
+
 typedef enum
 {
     WARNING = 0,
@@ -170,7 +176,7 @@ typedef enum
 typedef struct
 {
     bool_t  is_open;
-    FILE   *log_file;
+    FILE   *log_fp;
 } log_t;
 
 /* global variable */
@@ -179,3 +185,4 @@ extern opt_file_t opt_file;
 extern FILE      *obs_fp_ptr;
 
 extern RETURN_STATUS spp_proc(opt_file_t *opt_file);
+
