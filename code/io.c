@@ -1,7 +1,7 @@
 #pragma once
 #include "io.h"
 #include "spp_sol.h"
-#include <string.h>
+
 
 /* global variable */
 extern log_t loger;

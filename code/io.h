@@ -1,4 +1,5 @@
 #pragma once
+#include <string.h>
 #include "common.h"
 #include "spp_sol.h"
 

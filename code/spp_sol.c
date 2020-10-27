@@ -9,7 +9,7 @@ extern log_t loger;
 RETURN_STATUS spp_proc(opt_file_t *opt_file)
 {
 	obs_epoch_t   obs_c;
-	eph_sat_t     eph;
+	eph_t     eph;
 	RETURN_STATUS ret_status       = false;
 	uint8_t		  is_open_obs_file = false;	// false: obs file has been opened; true: has not been opened.
 	uint8_t		  is_open_nav_file = false;
