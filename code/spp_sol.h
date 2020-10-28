@@ -107,7 +107,7 @@ typedef struct
     fp64        CiC;
     fp64        CiS;
     uint32_t    Toc;           /*!< clock data reference time in seconds*/
-    fp64        sv_clk[3];     /*!< the SV clock bais, drift and drift rate: Af0, Af1, Af2*/
+    fp64        sv_clk[3];     /*!< the SV clock bais, drift and drift rate: Af0, Af1, Af2 */
     fp64        Tgd;
     // TODO: satellite orbit parameters of bds, glo and gal 
 } eph_sat_t;
@@ -130,15 +130,15 @@ typedef struct
     fp64        satvel[3];
     fp64        el;
     fp64        transtime;
-} sat_info;
+} single_sat_info_t;
 
 typedef struct
 {
-    uint64_t satmask[4];
-    sat_info gps_sat[MAXGPSNUM];
-    sat_info glo_sat[MAXGLONUM];
-    eph_sat_t gal_sat[MAXGALNUM];
-    eph_sat_t bds_sat[MAXBDSNUM];
+    uint64_t           satmask[4];
+    single_sat_info_t  gps_sat[MAXGPSNUM];
+    single_sat_info_t  glo_sat[MAXGLONUM];
+    eph_sat_t          gal_sat[MAXGALNUM];
+    eph_sat_t          bds_sat[MAXBDSNUM];
     // TODO: other peremters
 } sat_info_t;
 
@@ -205,4 +205,7 @@ extern opt_file_t opt_file;
 extern FILE      *obs_fp_ptr;
 
 extern RETURN_STATUS spp_proc(opt_file_t *opt_file);
-
+extern RETURN_STATUS get_sat_pv_broadcast_eph(obs_epoch_t* obs_c, eph_sat_t* eph_sat, sat_info_t* sat_info);
+extern RETURN_STATUS get_broadcast_eph_sv_clk(obs_epoch_t *obs_c, eph_sat_t* eph_sat, sat_info_t *sat_info);
+extern RETURN_STATUS get_sv_pos_clk(obs_epoch_t* obs_c, eph_sat_t *eph_sat, sat_info_t *sat_info);
+extern eph_sat_t *sel_broadcast_eph(fp64 time, int32_t sys_id, int32_t sat_id, eph_t *eph);
