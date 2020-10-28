@@ -124,6 +124,26 @@ typedef struct
 
 typedef struct
 {
+    uint32_t    sys_id;
+    uint32_t    sv_id;
+    fp64        satpos[3];
+    fp64        satvel[3];
+    fp64        el;
+    fp64        transtime;
+} sat_info;
+
+typedef struct
+{
+    uint64_t satmask[4];
+    sat_info gps_sat[MAXGPSNUM];
+    sat_info glo_sat[MAXGLONUM];
+    eph_sat_t gal_sat[MAXGALNUM];
+    eph_sat_t bds_sat[MAXBDSNUM];
+    // TODO: other peremters
+} sat_info_t;
+
+typedef struct
+{
     fp64  pos[3];
     fp64  vel[3];
     fp64  dt[2];
