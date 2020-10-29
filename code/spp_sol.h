@@ -23,22 +23,24 @@
 #include "stdlib.h"
 #include "lib.h"
 
-#define MAXSYS      (4)     // number of system
-#define FREQ_NUM    (2)     // number of frequency
-#define MAXOBS      (256)   // the maximum observation number
-#define MAXBROEPH   (30)   // the maximun number of epoch of broadcast ephemeris
+#define MAXSYS          (4)         // number of system
+#define FREQ_NUM        (2)         // number of frequency
+#define MAXOBS          (256)       // the maximum observation number
+#define MAXBROEPH       (30)        // the maximun number of epoch of broadcast ephemeris
 
-#define MAXGPSNUM   (32)
-#define MAXGLONUM   (27)
-#define MAXGALNUM   (30)
-#define MAXBDSNUM   (50)
+#define MAXGPSNUM       (32)
+#define MAXGLONUM       (27)
+#define MAXGALNUM       (30)
+#define MAXBDSNUM       (50)
 
-#define SYS_NON     (0x00)
-#define SYS_GPS     (0x01)
-#define SYS_GLO     (0x02)
-#define SYS_GAL     (0x04)
-#define SYS_BDS     (0x08)
-
+#define SYS_NON         (0x00)
+#define SYS_GPS         (0x01)
+#define SYS_GLO         (0x02)
+#define SYS_GAL         (0x04)
+#define SYS_BDS         (0x08)
+#define VERY_BIG_NUM    (99999999.0)
+#define VERY_SMALL_NUM  (-99999999.0)
+#define CLIGHT          (299792458.0) // light speed 
 #define DEBUG
 
 /* observation of a single satellite */
@@ -210,4 +212,4 @@ extern RETURN_STATUS spp_proc(opt_file_t *opt_file);
 extern RETURN_STATUS get_sat_pv_broadcast_eph(obs_epoch_t* obs_c, eph_sat_t* eph_sat, sat_info_t* sat_info);
 extern RETURN_STATUS get_broadcast_eph_sv_clk(obs_epoch_t *obs_c, eph_sat_t* eph_sat, sat_info_t *sat_info);
 extern RETURN_STATUS get_sv_pos_clk(obs_epoch_t* obs_c, eph_sat_t *eph_sat, sat_info_t *sat_info);
-extern eph_sat_t *sel_broadcast_eph(fp64 time, int32_t sys_id, int32_t sat_id, eph_t *eph);
+extern eph_sat_t sel_broadcast_eph(fp64 time, int32_t sys_id, int32_t sat_id, eph_t *eph);

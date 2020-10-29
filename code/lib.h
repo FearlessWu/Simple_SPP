@@ -7,3 +7,5 @@
   * @retval     fp64 time
  */
 extern fp64 epoch2time(const double *ep);
+
+extern void time2epoch(fp64 time, double* ep);
