@@ -128,17 +128,19 @@ typedef struct
     uint32_t    sv_id;
     fp64        satpos[3];
     fp64        satvel[3];
+    fp64        satclk;
     fp64        el;
     fp64        transtime;
+
 } single_sat_info_t;
 
 typedef struct
 {
-    uint64_t           satmask[4];
-    single_sat_info_t  gps_sat[MAXGPSNUM];
-    single_sat_info_t  glo_sat[MAXGLONUM];
-    eph_sat_t          gal_sat[MAXGALNUM];
-    eph_sat_t          bds_sat[MAXBDSNUM];
+    uint64_t            satmask[4];
+    single_sat_info_t   gps_sat[MAXGPSNUM];
+    single_sat_info_t   glo_sat[MAXGLONUM];
+    single_sat_info_t   gal_sat[MAXGALNUM];
+    single_sat_info_t   bds_sat[MAXBDSNUM];
     // TODO: other peremters
 } sat_info_t;
 
