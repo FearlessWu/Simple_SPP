@@ -111,6 +111,9 @@ typedef struct
     uint32_t    Toc;           /*!< clock data reference time in seconds*/
     fp64        sv_clk[3];     /*!< the SV clock bais, drift and drift rate: Af0, Af1, Af2 */
     fp64        Tgd;
+    fp64        sv_acc;
+    fp64        sv_hea;
+
     // TODO: satellite orbit parameters of bds, glo and gal 
 } eph_sat_t;
 

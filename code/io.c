@@ -307,6 +307,10 @@ RETURN_STATUS read_rinex_nav_data(char *nav_file_path, eph_t *all_eph_info, uint
                     break;
                 case 6:
 
+                    strncpy(p, string + 4 + 19 * 0, 19);
+                    temp_eph.sv_acc = atof(p);
+                    strncpy(p, string + 4 + 19 * 1, 19);
+                    temp_eph.sv_hea = atof(p);
                     strncpy(p, string + 4 + 19 * 2, 19);
                     add_stop_char(p, 19);
                     temp_eph.Tgd = atof(p);
