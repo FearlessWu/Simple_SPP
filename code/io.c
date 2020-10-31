@@ -672,8 +672,17 @@ static RETURN_STATUS read_rinex_obs_body(obs_epoch_t *obs, uint8_t *is_run)
 }
 RETURN_STATUS load_curr_rinex_obs(char *obs_file_path, obs_epoch_t *obs, uint8_t *is_open_obs_file, uint8_t *is_run)
 {
-    read_rinex_obs_header(obs_file_path, &obs->rcv_info, is_open_obs_file);
-    read_rinex_obs_body(obs, is_run);
+    if (!read_rinex_obs_header(obs_file_path, &obs->rcv_info, is_open_obs_file))
+    {
+        // TODO: do something
+        return RET_FAIL;
+    }
+    
+    if (!read_rinex_obs_body(obs, is_run))
+    {
+        // TODO: do something
+        return RET_FAIL;
+    }
     
 	return RET_SUCCESS;
 }

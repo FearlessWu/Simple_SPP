@@ -11,58 +11,62 @@ extern log_t loger;
 eph_sat_t sel_broadcast_eph(fp64 time, int32_t sys_id, int32_t sat_id, eph_t *eph)
 {
 	eph_sat_t eph_sat = { 0 };
-	if (sys_id & SYS_GPS)
+	if (!(sys_id & SYS_GPS))
 	{
-		int32_t i;
-		for (i = 0; i < MAXGPSNUM; ++i)
+		return eph_sat;
+	}
+
+	int32_t i;
+	for (i = 0; i < MAXGPSNUM; ++i)
+	{
+		if (sat_id != eph->gps_eph[i][0].sv_id)
 		{
-			if (sat_id == eph->gps_eph[i][0].sv_id)
+			continue;
+		}
+
+		int32_t j;
+		int32_t backward_idx;
+		fp64	backward_time = time - VERY_BIG_NUM;
+		fp64    eph_time;
+
+		for (j = 0; j < MAXBROEPH; ++j)
+		{
+			if (eph->gps_eph[i][j].time[0] == 0)
 			{
-				int32_t j;
-				int32_t backward_idx;
-				fp64	backward_time = time - VERY_BIG_NUM;
-				fp64    eph_time;
+				continue;
+			}
+			fp64 ep[6] = { 0 };
+			int32_t k;
+			for (k = 0; k < 5; k++)
+			{
+				ep[k] = eph->gps_eph[i][j].time[k];
+			}
 
-				for (j = 0; j < MAXBROEPH; ++j)
+			eph_time = epoch2time(ep);
+
+            if (eph_time == time)
+            {
+                return eph->gps_eph[i][j];
+            }
+
+			if (eph_time < time)
+			{
+				if (eph_time > backward_time)
 				{
-					if (eph->gps_eph[i][j].time[0] == 0)
-					{
-						continue;
-					}
-					fp64 ep[6] = { 0 };
-					int32_t k;
-					for (k = 0; k < 5; k++)
-					{
-						ep[k] = eph->gps_eph[i][j].time[k];
-					}
+					backward_idx = j;
+					backward_time = eph_time;
 
-					eph_time = epoch2time(ep);
-
-                    if (eph_time == time)
-                    {
-                        return eph->gps_eph[i][j];
-                    }
-
-					if (eph_time < time)
-					{
-						if (eph_time > backward_time)
-						{
-							backward_idx = j;
-							backward_time = eph_time;
-
-							continue;
-						}
-					}
-					if (eph_time > time)
-					{
-						continue;
-					}
-				}
-				if ((time - backward_time) < BROADCAST_EPH_THRESHOLD)
-				{
-					return eph->gps_eph[i][backward_idx];
+					continue;
 				}
 			}
+			if (eph_time > time)
+			{
+				continue;
+			}
+		}
+		if ((time - backward_time) < BROADCAST_EPH_THRESHOLD)
+		{
+			return eph->gps_eph[i][backward_idx];
 		}
 	}
 	return eph_sat;
@@ -116,11 +120,11 @@ RETURN_STATUS get_sat_pos_broadcast_eph(eph_sat_t *eph_sat, fp64 *sat_pos, fp64 
 	cos2u = cos(2 * u);
 	sin2u = sin(2 * u);
 
-	u	 += eph_sat->CuC * cos2u + eph_sat->CuS * sin2u;
-	r	  = eph_sat->rootA * eph_sat->rootA * (1 - eph_sat->E * cos(E)) + eph_sat->CrC * cos2u + eph_sat->CrS * sin2u;
-	eph_i = eph_sat->I0 + eph_sat->CiC * cos2u + eph_sat->CiS * sin2u + eph_sat->Idot * tk;
-	x	  = r * cos(u);
-	y	  = r * sin(u);
+	u	  += eph_sat->CuC * cos2u + eph_sat->CuS * sin2u;
+	r	   = eph_sat->rootA * eph_sat->rootA * (1 - eph_sat->E * cos(E)) + eph_sat->CrC * cos2u + eph_sat->CrS * sin2u;
+	eph_i  = eph_sat->I0 + eph_sat->CiC * cos2u + eph_sat->CiS * sin2u + eph_sat->Idot * tk;
+	x	   = r * cos(u);
+	y	   = r * sin(u);
 	omg_tk = eph_sat->Omega0 + (eph_sat->OmegaDot - OMGE) * tk - OMGE * eph_sat->Toe;
  
     sat_pos[0] = x * cos(omg_tk) - y * cos(eph_i) * sin(omg_tk);
@@ -128,8 +132,8 @@ RETURN_STATUS get_sat_pos_broadcast_eph(eph_sat_t *eph_sat, fp64 *sat_pos, fp64 
 	sat_pos[2] = y * sin(eph_i);
 
 	/* relativity correction */
-	tk = time - eph_sat->Toc;
-	*sat_clk = eph_sat->sv_clk[0] + eph_sat->sv_clk[1] * tk + eph_sat->sv_clk[2] * tk * tk;
+	tk        = time - eph_sat->Toc;
+	*sat_clk  = eph_sat->sv_clk[0] + eph_sat->sv_clk[1] * tk + eph_sat->sv_clk[2] * tk * tk;
 	*sat_clk -= 2.0 * sqrt(GPS_GM * eph_sat->rootA * eph_sat->rootA) * eph_sat->E * sin(E) / CLIGHT / CLIGHT;
 
 	/* calculate sv variance */
@@ -223,7 +227,7 @@ RETURN_STATUS get_sv_pos_clk(obs_epoch_t *obs_c, eph_t *eph, sat_info_t *sat_inf
 		}
 		
         sat_clk = get_sv_clk_broadcast_eph(obs_c, &eph_sat, sat_info);
-		time_c = obs_c->time - obs_c->obs[i].P[0] / CLIGHT;
+		time_c  = obs_c->time - obs_c->obs[i].P[0] / CLIGHT;
         get_sat_pos_broadcast_eph(&eph_sat, &sat_pos, &sat_clk, time_c, &var);
 		for (int32_t j = 0; j < 3; ++j)
 		{
@@ -232,7 +236,7 @@ RETURN_STATUS get_sv_pos_clk(obs_epoch_t *obs_c, eph_t *eph, sat_info_t *sat_inf
 		sat_info->gps_sat[obs_c->obs[i].sv_id - 1].satclk[0] = sat_clk;
 
 		/* calculate satellite velocity and clock drift */
-		time_s = time_c - 1E-3;
+		time_s  = time_c - 1E-3;
 		sat_clk = get_sv_clk_broadcast_eph(obs_c, &eph_sat, sat_info);
 		get_sat_pos_broadcast_eph(&eph_sat, &sat_pos, &sat_clk, time_s, &var_s);
 		for (int32_t j = 0; j < 3; ++j)
@@ -257,12 +261,13 @@ static void init_sat_info(sat_info_t *sat_info)
 RETURN_STATUS spp_proc(opt_file_t *opt_file)
 {
 	obs_epoch_t   obs_c;
-	eph_t     eph;
+	eph_t         eph;
 	RETURN_STATUS ret_status       = false;
 	uint8_t		  is_open_obs_file = false;	// false: obs file has been opened; true: has not been opened.
 	uint8_t		  is_open_nav_file = false;
 	uint8_t		  is_run           = true;
 	uint8_t		  is_fist_run	   = true;
+
 	while (is_run)
 	{
 		sat_info_t sat_info;
@@ -279,6 +284,5 @@ RETURN_STATUS spp_proc(opt_file_t *opt_file)
 		get_sv_pos_clk(&obs_c, &eph, &sat_info);
 	}
 	
-
 	return RET_SUCCESS;
 }
