@@ -23,10 +23,10 @@
 #include "stdlib.h"
 #include "lib.h"
 
-#define MAXSYS          (4)         // number of system
-#define FREQ_NUM        (2)         // number of frequency
-#define MAXOBS          (256)       // the maximum observation number
-#define MAXBROEPH       (30)        // the maximun number of epoch of broadcast ephemeris
+#define MAXSYS          (4)                 // number of system
+#define FREQ_NUM        (2)                 // number of frequency
+#define MAXOBS          (256)               // the maximum observation number
+#define MAXBROEPH       (30)                // the maximun number of epoch of broadcast ephemeris
 
 #define MAXGPSNUM       (32)
 #define MAXGLONUM       (27)
@@ -40,8 +40,8 @@
 #define SYS_BDS         (0x08)
 #define VERY_BIG_NUM    (99999999.0)
 #define VERY_SMALL_NUM  (-99999999.0)
-#define CLIGHT          (299792458.0) // light speed 
-#define DEBUG
+#define CLIGHT          (299792458.0)       // light speed 
+
 
 /* observation of a single satellite */
 typedef struct
@@ -108,7 +108,7 @@ typedef struct
     fp64        CrS;
     fp64        CiC;
     fp64        CiS;
-    uint32_t    Toc;           /*!< clock data reference time in seconds*/
+    fp64        Toc;           /*!< clock data reference time in seconds*/
     fp64        sv_clk[3];     /*!< the SV clock bais, drift and drift rate: Af0, Af1, Af2 */
     fp64        Tgd;
     fp64        sv_acc;
@@ -133,10 +133,10 @@ typedef struct
     uint32_t    sv_id;
     fp64        satpos[3];
     fp64        satvel[3];
-    fp64        satclk;
+    fp64        satclk[2];
     fp64        el;
     fp64        transtime;
-
+    fp64        var;
 } single_sat_info_t;
 
 typedef struct
@@ -211,8 +211,4 @@ extern log_t      loger;
 extern opt_file_t opt_file;
 extern FILE      *obs_fp_ptr;
 
-extern RETURN_STATUS spp_proc(opt_file_t *opt_file);
-extern RETURN_STATUS get_sat_pv_broadcast_eph(obs_epoch_t* obs_c, eph_sat_t* eph_sat, sat_info_t* sat_info);
-extern RETURN_STATUS get_broadcast_eph_sv_clk(obs_epoch_t *obs_c, eph_sat_t* eph_sat, sat_info_t *sat_info);
-extern RETURN_STATUS get_sv_pos_clk(obs_epoch_t* obs_c, eph_sat_t *eph_sat, sat_info_t *sat_info);
-extern eph_sat_t sel_broadcast_eph(fp64 time, int32_t sys_id, int32_t sat_id, eph_t *eph);
+extern RETURN_STATUS spp_proc(opt_file_t* opt_file);
