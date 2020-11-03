@@ -151,6 +151,20 @@ typedef struct
 
 typedef struct
 {
+    fp64        alph[4];
+    fp64        beta[4];
+} sin_sys_ion_cor;
+
+typedef struct
+{
+    sin_sys_ion_cor     gps_ino_cor;
+    sin_sys_ion_cor     glo_ino_cor;
+    sin_sys_ion_cor     gal_ino_cor;
+    sin_sys_ion_cor     bds_ino_cor;
+}sys_ion_cor;
+
+typedef struct
+{
     fp64  pos[3];
     fp64  vel[3];
     fp64  dt[2];

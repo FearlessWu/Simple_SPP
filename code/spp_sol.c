@@ -262,6 +262,7 @@ RETURN_STATUS spp_proc(opt_file_t *opt_file)
 {
 	obs_epoch_t   obs_c;
 	eph_t         eph;
+	sys_ion_cor   ion_cor;
 	RETURN_STATUS ret_status       = false;
 	uint8_t		  is_open_obs_file = false;	// false: obs file has been opened; true: has not been opened.
 	uint8_t		  is_open_nav_file = false;
@@ -278,7 +279,7 @@ RETURN_STATUS spp_proc(opt_file_t *opt_file)
 		if (is_fist_run)
 		{
 			/* read rinex nav file*/
-			read_rinex_nav_data(opt_file->nav_file, &eph, &is_open_nav_file);
+			read_rinex_nav_data(opt_file->nav_file, &ion_cor, &eph, &is_open_nav_file);
 			is_fist_run = false;
 		}
 		get_sv_pos_clk(&obs_c, &eph, &sat_info);

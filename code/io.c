@@ -159,7 +159,7 @@ RETURN_STATUS read_option_file(opt_file_t *opt_file, int32_t args, char *opt_fil
     return read_status;
 }
 
-RETURN_STATUS read_rinex_nav_data(char *nav_file_path, eph_t *all_eph_info, uint8_t *is_open_nav_file)
+RETURN_STATUS read_rinex_nav_data(char *nav_file_path, sys_ion_cor  *all_ion_cor, eph_t *all_eph_info, uint8_t *is_open_nav_file)
 {
     char string[90], p[20];
     char nav_header[64] = { "END OF HEADER" };
@@ -176,10 +176,33 @@ RETURN_STATUS read_rinex_nav_data(char *nav_file_path, eph_t *all_eph_info, uint
 	}
     *is_open_nav_file = true;
 
+    memset(all_ion_cor, 0, sizeof(sys_ion_cor));
     memset(all_eph_info, 0, sizeof(eph_t));
     svid =  0;
     while (fgets(string, 89, nav_fp_ptr))
     {
+        if (string[0] == 'G' && string[1] == 'P' && string[2] == 'S' && string[3] == 'A')
+        {
+            for (j = 0; j < 4; ++j)
+            {
+                int8_t k = j * 12;
+                    strncpy(p, string + 5 + k, 12);
+                    add_stop_char(p, 12);
+                    all_ion_cor->gps_ino_cor.alph[j] = atof(p);
+            }
+        }
+
+        if (string[0] == 'G' && string[1] == 'P' && string[2] == 'S' && string[3] == 'B')
+        {
+            for (j = 0; j < 4; ++j)
+            {
+                int8_t k = j * 12;
+                strncpy(p, string + 5 + k, 12);
+                add_stop_char(p, 12);
+                all_ion_cor->gps_ino_cor.beta[j] = atof(p);
+            }
+        }
+
         if (strstr(string, nav_header))
         {
             break;
