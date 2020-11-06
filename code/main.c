@@ -19,7 +19,7 @@ RETURN_STATUS main(int32_t args, char *argv[])
     
         return RET_FAIL;
     }
-    ret_status = spp_proc(&opt_file);
+    ret_status = proc(&opt_file);
     
     close_log_file();
     

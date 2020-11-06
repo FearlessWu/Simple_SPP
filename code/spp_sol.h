@@ -225,4 +225,4 @@ extern log_t      loger;
 extern opt_file_t opt_file;
 extern FILE      *obs_fp_ptr;
 
-extern RETURN_STATUS spp_proc(opt_file_t* opt_file);
+extern RETURN_STATUS proc(opt_file_t* opt_file);

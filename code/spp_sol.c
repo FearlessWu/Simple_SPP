@@ -114,8 +114,6 @@ RETURN_STATUS get_sat_pos_broadcast_eph(eph_sat_t *eph_sat, fp64 *sat_pos, fp64 
 		last_E = E;
 		++i;
 	}
-
-	
 	u	  = atan2(sqrt(1.0 - eph_sat->E * eph_sat->E) * sin(E), cos(E) - eph_sat->E) + eph_sat->Omega;
 	cos2u = cos(2 * u);
 	sin2u = sin(2 * u);
@@ -258,7 +256,12 @@ static void init_sat_info(sat_info_t *sat_info)
 		sat_info->gps_sat[i].sv_id  = i + 1;
 	}
 }
-RETURN_STATUS spp_proc(opt_file_t *opt_file)
+RETURN_STATUS spp_proc(obs_epoch_t* obs_c, sat_info_t* sat_info)
+{
+	
+	return RET_SUCCESS;
+}
+RETURN_STATUS proc(opt_file_t *opt_file)
 {
 	obs_epoch_t   obs_c;
 	eph_t         eph;
@@ -283,6 +286,8 @@ RETURN_STATUS spp_proc(opt_file_t *opt_file)
 			is_fist_run = false;
 		}
 		get_sv_pos_clk(&obs_c, &eph, &sat_info);
+
+		spp_proc(&obs_c, &sat_info);
 	}
 	
 	return RET_SUCCESS;
