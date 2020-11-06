@@ -139,29 +139,32 @@ typedef struct
     fp64        var;
 } single_sat_info_t;
 
+
+
+typedef struct
+{
+    fp64        alph[4];
+    fp64        beta[4];
+} sin_sys_ion_cor_t;
+
+typedef struct
+{
+    sin_sys_ion_cor_t     gps_ino_cor;
+    sin_sys_ion_cor_t     glo_ino_cor;
+    sin_sys_ion_cor_t     gal_ino_cor;
+    sin_sys_ion_cor_t     bds_ino_cor;
+}sys_ion_cor_t;
+
 typedef struct
 {
     uint64_t            satmask[4];
+    sys_ion_cor_t       sys_ion_cor;
     single_sat_info_t   gps_sat[MAXGPSNUM];
     single_sat_info_t   glo_sat[MAXGLONUM];
     single_sat_info_t   gal_sat[MAXGALNUM];
     single_sat_info_t   bds_sat[MAXBDSNUM];
     // TODO: other peremters
 } sat_info_t;
-
-typedef struct
-{
-    fp64        alph[4];
-    fp64        beta[4];
-} sin_sys_ion_cor;
-
-typedef struct
-{
-    sin_sys_ion_cor     gps_ino_cor;
-    sin_sys_ion_cor     glo_ino_cor;
-    sin_sys_ion_cor     gal_ino_cor;
-    sin_sys_ion_cor     bds_ino_cor;
-}sys_ion_cor;
 
 typedef struct
 {
