@@ -40,7 +40,7 @@
 #define SYS_BDS         (0x08)
 #define VERY_BIG_NUM    (99999999.0)
 #define VERY_SMALL_NUM  (-99999999.0)
-#define CLIGHT          (299792458.0)       // light speed 
+
 
 
 /* observation of a single satellite */
@@ -55,7 +55,7 @@ typedef struct
     int32_t     L_status[FREQ_NUM]; /*!< the status of phase. It can show whether phase can use or not */
     int32_t     D_status[FREQ_NUM]; /*!< the status of doppler. It can show whether doppler can use or not */
     fp64        CN0[FREQ_NUM];      /*!< signal strength */
-    fp64        elv[FREQ_NUM];
+    fp64        azel[2];
     int32_t     LLI[FREQ_NUM]; 
 } obs_sv_t;
 
@@ -229,3 +229,5 @@ extern opt_file_t opt_file;
 extern FILE      *obs_fp_ptr;
 
 extern RETURN_STATUS proc(opt_file_t* opt_file);
+
+

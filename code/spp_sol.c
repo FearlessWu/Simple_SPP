@@ -3,7 +3,7 @@
 #include "io.h"
 #define BROADCAST_EPH_THRESHOLD	(7200)				//unit: sec
 #define GPS_GM					(3.986004418E14)    // earth-gravitational constant reference to RTKLIB
-#define OMGE					(7.2921151467E-5)   //earth angular velocity (IS-GPS) (rad/s)
+
 
 /* global variable */
 FILE        *obs_fp_ptr;
@@ -226,7 +226,7 @@ RETURN_STATUS get_sv_pos_clk(obs_epoch_t *obs_c, eph_t *eph, sat_info_t *sat_inf
 		
         sat_clk = get_sv_clk_broadcast_eph(obs_c, &eph_sat, sat_info);
 		time_c  = obs_c->time - obs_c->obs[i].P[0] / CLIGHT;
-        get_sat_pos_broadcast_eph(&eph_sat, &sat_pos, &sat_clk, time_c, &var);
+        get_sat_pos_broadcast_eph(&eph_sat, sat_pos, &sat_clk, time_c, &var);
 		for (int32_t j = 0; j < 3; ++j)
 		{
 			sat_info->gps_sat[obs_c->obs[i].sv_id - 1].satpos[j] = sat_pos[j];
@@ -236,7 +236,7 @@ RETURN_STATUS get_sv_pos_clk(obs_epoch_t *obs_c, eph_t *eph, sat_info_t *sat_inf
 		/* calculate satellite velocity and clock drift */
 		time_s  = time_c - 1E-3;
 		sat_clk = get_sv_clk_broadcast_eph(obs_c, &eph_sat, sat_info);
-		get_sat_pos_broadcast_eph(&eph_sat, &sat_pos, &sat_clk, time_s, &var_s);
+		get_sat_pos_broadcast_eph(&eph_sat, sat_pos, &sat_clk, time_s, &var_s);
 		for (int32_t j = 0; j < 3; ++j)
 		{
 			sat_info->gps_sat[obs_c->obs[i].sv_id - 1].satvel[j] = (sat_info->gps_sat[obs_c->obs[i].sv_id - 1].satpos[j] - sat_pos[j]) / 1E-3;
@@ -256,15 +256,17 @@ static void init_sat_info(sat_info_t *sat_info)
 		sat_info->gps_sat[i].sv_id  = i + 1;
 	}
 }
+
 RETURN_STATUS spp_proc(obs_epoch_t* obs_c, sat_info_t* sat_info)
 {
-	
+
 	return RET_SUCCESS;
 }
+
 RETURN_STATUS proc(opt_file_t *opt_file)
 {
-	obs_epoch_t   obs_c;
-	eph_t         eph;
+    obs_epoch_t   obs_c;
+    eph_t         eph;
 	RETURN_STATUS ret_status       = false;
 	uint8_t		  is_open_obs_file = false;	// false: obs file has been opened; true: has not been opened.
 	uint8_t		  is_open_nav_file = false;
