@@ -8,6 +8,11 @@
 /* global variable */
 FILE        *obs_fp_ptr;
 extern log_t loger;
+
+/* variable only use in this file */
+obs_epoch_t   obs_c;
+eph_t         eph;
+
 eph_sat_t sel_broadcast_eph(fp64 time, int32_t sys_id, int32_t sat_id, eph_t *eph)
 {
 	eph_sat_t eph_sat = { 0 };
@@ -265,8 +270,6 @@ RETURN_STATUS spp_proc(obs_epoch_t* obs_c, sat_info_t* sat_info)
 
 RETURN_STATUS proc(opt_file_t *opt_file)
 {
-    obs_epoch_t   obs_c;
-    eph_t         eph;
 	RETURN_STATUS ret_status       = false;
 	uint8_t		  is_open_obs_file = false;	// false: obs file has been opened; true: has not been opened.
 	uint8_t		  is_open_nav_file = false;

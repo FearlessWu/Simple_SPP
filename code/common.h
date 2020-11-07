@@ -1,8 +1,16 @@
+/**
+  ***************************************(C) COPYRIGHT 2020 Wyatt Wu***********************************
+  * @file        common.c/h
+  * @brief       This head/source file is used to define various public functions and macro definitions 
+  *              for SPP and PPP et al
+  * @note
+  * @history
+  * Version      Date            Author          Modification
+  * V1.0.0       Nov-07-2020     Wyatt Wu        1. build this file and some foundational content.
+  ***************************************(C) COPYRIGHT 2020 Wyatt Wu***********************************
+*/
 #pragma once
-#include <math.h>
 #include "lib.h"
-
-#define CLIGHT          (299792458.0)       // light speed 
 
 /*
  *@brief        transform ecef to geodetic postion
@@ -11,7 +19,7 @@
  *@param[out]   blh: geodetic position {lat,lon,h} (rad,m)
  *@retval       none
  **/
-extern void xyz2blh(const fp64* xyz, fp64* blh);
+extern void xyz2blh(const fp64 *xyz, fp64 *blh);
 
 /*
  *@brief        eometric distance and receiver-to-satellite unit vector

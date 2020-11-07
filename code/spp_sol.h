@@ -1,19 +1,14 @@
 /**
   ***************************************(C) COPYRIGHT 2020 Wyatt Wu***********************************
   * @file        spp_sol.c/h
-  * @brief       This head file is used to define global struct, global variable, external function.
-  *              Mostly about SPP solution function declare here. We also maintain a enumeration type
-  *              of error code to record error type for debugging.
+  * @brief       This head/source file is used to define global struct, global variable, external function.
+  *              Mostly about SPP solution function declare here. We also maintain a enumeration type of 
+  *              error code to record error type for debugging.
   * @note        
   * @history
   * Version      Date            Author          Modification
   * V1.0.0       Oct-24-2020     Wyatt Wu        1. build this file and some foundational content.
   * V1.0.0       Oct-25-2020     PQiu            1. build the struct of eph.
-  @verbatim
-  =====================================================================================================
-
-  =====================================================================================================
-  @endverbatim
   ***************************************(C) COPYRIGHT 2020 Wyatt Wu***********************************               
 */
 #pragma once
@@ -23,10 +18,10 @@
 #include "stdlib.h"
 #include "lib.h"
 
-#define MAXSYS          (4)                 // number of system
-#define FREQ_NUM        (2)                 // number of frequency
-#define MAXOBS          (256)               // the maximum observation number
-#define MAXBROEPH       (30)                // the maximun number of epoch of broadcast ephemeris
+#define MAXSYS          (4)  // number of system
+#define FREQ_NUM        (2)  // number of frequency
+#define MAXOBS          (256)// the maximum observation number
+#define MAXBROEPH       (30) // the maximun number of epoch of broadcast ephemeris
 
 #define MAXGPSNUM       (32)
 #define MAXGLONUM       (27)
@@ -228,6 +223,12 @@ extern log_t      loger;
 extern opt_file_t opt_file;
 extern FILE      *obs_fp_ptr;
 
+/*
+ *@brief        the main process root function
+ *@author       wyatt.wu
+ *@param[in]    option file path
+ *@retval       RET_FALI/RET_SUCCESS
+ **/
 extern RETURN_STATUS proc(opt_file_t* opt_file);
 
 
