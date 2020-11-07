@@ -1,9 +1,22 @@
-#include "common.h"
+/**
+  ***************************************(C) COPYRIGHT 2020 Wyatt Wu***********************************
+  * @file        lib.c/h
+  * @brief       This head/source file is used to write various basic library functions(mainly  
+  *              from RTKLIB), basic macro definitions, and clear definitions of basic types
+  * @note
+  * @history
+  * Version      Date            Author          Modification
+  * V1.0.0       Nov-07-2020     Wyatt Wu        1. build this file and some foundational content.
+  ***************************************(C) COPYRIGHT 2020 Wyatt Wu***********************************
+*/
+#pragma once
+#include <math.h>
 
-#define OMGE        7.2921151467E-5         /* earth angular velocity (IS-GPS) (rad/s)*/
+#define OMGE        (7.2921151467E-5)       /* earth angular velocity (IS-GPS) (rad/s)*/
 #define FE_WGS84    (1.0/298.257223563)     /* earth flattening (WGS84) */
 #define RE_WGS84    (6378137.0)             /* earth semimajor axis (WGS84) (m)*/
 #define PI          (3.1415926535897932)    /* pi */
+#define CLIGHT      (299792458.0)           /* light speed */
 
 /* redefine data type to adapt other platform */
 typedef signed char         int8_t;
@@ -25,7 +38,7 @@ typedef unsigned char       RETURN_STATUS;
   * @param[in]  ep: day/time {year,month,day,hour,min,sec}
   * @retval     fp64 time
  */
-extern fp64 epoch2time(const double *ep);
+extern fp64 epoch2time(const fp64 *ep);
 
 /**
   * @brief      time to calendar day/time 

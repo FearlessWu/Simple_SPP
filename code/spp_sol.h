@@ -1,19 +1,14 @@
 /**
   ***************************************(C) COPYRIGHT 2020 Wyatt Wu***********************************
   * @file        spp_sol.c/h
-  * @brief       This head file is used to define global struct, global variable, external function.
-  *              Mostly about SPP solution function declare here. We also maintain a enumeration type
-  *              of error code to record error type for debugging.
+  * @brief       This head/source file is used to define global struct, global variable, external function.
+  *              Mostly about SPP solution function declare here. We also maintain a enumeration type of 
+  *              error code to record error type for debugging.
   * @note        
   * @history
   * Version      Date            Author          Modification
   * V1.0.0       Oct-24-2020     Wyatt Wu        1. build this file and some foundational content.
   * V1.0.0       Oct-25-2020     PQiu            1. build the struct of eph.
-  @verbatim
-  =====================================================================================================
-
-  =====================================================================================================
-  @endverbatim
   ***************************************(C) COPYRIGHT 2020 Wyatt Wu***********************************               
 */
 #pragma once
