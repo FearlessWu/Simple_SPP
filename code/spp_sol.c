@@ -259,13 +259,13 @@ static fp64 get_tropo_param(int32_t index, fp64 phi_degree, int32_t doy)
 		int32_t phiIndex;
 		fp64 phi1_1, phi0_1;
 		phiIndex = (int)(phi_degree / 15.) - 1;
-		phi0_1 = (phiIndex + 1) * 15;
+		phi0_1 = ((fp64)phiIndex + 1) * 15;
 		phi1_1 = phi0_1 + 15;
 		p0 = tropo_param_interpolation(phi_degree, phi1_1, phi0_1, TropoTable0[phiIndex + 1][index], TropoTable0[phiIndex][index]);
 		PDot = tropo_param_interpolation(phi_degree, phi1_1, phi0_1, TropoTable1[phiIndex + 1][index], TropoTable1[phiIndex][index]);
 	}
 
-	temp = 2 * PI * (doy - DayRef) / 365.25;
+	temp = 2 * PI *((fp64)doy - DayRef) / 365.25;
 	temp = cos(temp);
 	temp = temp * PDot;
 	temp = p0 - temp;
@@ -309,6 +309,71 @@ static fp64 mops_tropo_delay(fp64 lat, fp64 h, fp64 ele, int32_t doy)
 		return 0;
 	else
 		return result;
+}
+
+static fp64 broadcast_iono_delay(fp64 time, fp64 *blh, obs_sv_t *obs, sat_info_t *sat_info)
+{
+	uint8_t i = 0;
+	const fp64* azel = obs->azel;
+	fp64 f, amp, per, x;
+	fp64 sc, fi, lambda;
+    fp64 tt;
+    int32_t week;
+	sin_sys_ion_cor_t *klbr_iono_param = &sat_info->sys_ion_cor.gps_ino_cor;
+
+	/* if no broadcast ionosphere parameters, using default parameters instead */
+	if (norm(klbr_iono_param->alph, 4) * norm(klbr_iono_param->beta, 4) <= 0)
+	{
+		klbr_iono_param->alph[0] =  0.1118E-07;
+		klbr_iono_param->alph[1] = -0.7451E-08;
+		klbr_iono_param->alph[2] = -0.5961E-07;
+		klbr_iono_param->alph[3] =  0.1192E-06;
+		klbr_iono_param->beta[0] =  0.1167E+06;
+		klbr_iono_param->beta[1] = -0.2294E+06;
+		klbr_iono_param->beta[2] = -0.1311E+06;
+        klbr_iono_param->beta[3] =  0.1049E+07;
+	}
+   
+	if (blh[2] < -1e3 || azel[1] <= 0)
+	{
+		return 0;
+	}
+	
+	/* earth centered angle (semi-circle) */
+	sc = 0.0137 / (azel[1] / PI + 0.11) - 0.022;
+
+	/* subionospheric latitude/longitude (semi-circle) */
+	fi = blh[0] / PI + sc * cos(azel[0]);
+	if (fi > 0.416)
+	{
+		fi = 0.416;
+	}
+	else if (fi < -0.416)
+	{
+		fi = -0.416;
+	}
+	lambda = blh[1] / PI + sc * sin(azel[0]) / cos(fi * PI);
+
+    /* geomagnetic latitude (semi-circle) */
+    fi += 0.064 * cos((lambda - 1.617) * PI);
+
+	
+    /* local time (s) */
+    tt = 43200.0 * lambda + time2gpst(time, &week);
+    tt -= floor(tt / 86400.0) * 86400.0; /* 0<=tt<86400 */
+	
+    /* slant factor */
+    f = 1.0 + 16.0 * pow(0.53 - azel[1] / PI, 3.0);
+
+    /* ionospheric delay */
+    amp = klbr_iono_param->alph[0] + fi * (klbr_iono_param->alph[1] + fi * (klbr_iono_param->alph[2] + fi * klbr_iono_param->alph[3]));
+    per = klbr_iono_param->beta[0] + fi * (klbr_iono_param->beta[1] + fi * (klbr_iono_param->beta[2] + fi * klbr_iono_param->beta[3]));
+    amp = amp < 0.0 ? 0.0 : amp;
+    per = per < 72000.0 ? 72000.0 : per;
+    x = 2.0 * PI * (tt - 50400.0) / per;
+
+    return CLIGHT * f * (fabs(x) < 1.57 ? 5E-9 + amp * (1.0 + x * x * (-0.5 + x * x / 24.0)) : 5E-9);
+
 }
 RETURN_STATUS get_sv_pos_clk(obs_epoch_t *obs_c, eph_t *eph, sat_info_t *sat_info)
 {
