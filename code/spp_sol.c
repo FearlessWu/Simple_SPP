@@ -1,4 +1,4 @@
-#pragma once
+
 #include "spp_sol.h"
 #include "io.h"
 #define BROADCAST_EPH_THRESHOLD    (7200)                //unit: sec

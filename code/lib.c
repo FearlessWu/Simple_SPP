@@ -1,4 +1,4 @@
-#pragma once
+
 #include "lib.h"
 
 static const fp64 gpst0[6] = { 1980,1, 6,0,0,0 }; /* gps time reference */

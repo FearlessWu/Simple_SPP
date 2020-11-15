@@ -1,4 +1,4 @@
-#pragma once
+
 #include "io.h"
 #include "spp_sol.h"
 
