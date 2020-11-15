@@ -48,6 +48,16 @@ extern fp64 epoch2time(const fp64 *ep);
  */
 extern void time2epoch(fp64 time, fp64 *ep);
 
+
+/**
+  * @brief         convert time to week and tow in gps time
+  * @author        quote from RTKLIB, modified by Wyatt wu
+  * @param[in]     t    : gps time in 1970
+  * @param[in/out] week : week number in gps time (NULL: no output)
+  * @retval        time of week in gps time (s)
+ */
+extern fp64 time2gpst(fp64 t, int32_t *week);
+
 /* 
  * @brief        inner product of vectors
  * @auther       quote from RTKLIB

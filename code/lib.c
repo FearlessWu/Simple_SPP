@@ -1,6 +1,8 @@
 #pragma once
 #include "lib.h"
 
+static const fp64 gpst0[6] = { 1980,1, 6,0,0,0 }; /* gps time reference */
+
 fp64 epoch2time(const fp64 *ep)
 {
     const int doy[] = { 1,32,60,91,121,152,182,213,244,274,305,335 };
@@ -39,6 +41,16 @@ void time2epoch(fp64 time, fp64 *ep)
     ep[3] = sec / 3600;
     ep[4] = sec % 3600 / 60;
     ep[5] = sec % 60 + fra;
+}
+
+fp64 time2gpst(fp64 t, int32_t *week)
+{
+    fp64 t0 = epoch2time(gpst0);
+    fp64 sec = t - t0;
+    int32_t w = (int32_t)((int32_t)sec / (86400 * 7));
+
+    if (week) *week = w;
+    return (fp64)(sec - (fp64)w * 86400 * 7);
 }
 
 

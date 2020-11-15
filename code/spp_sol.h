@@ -231,4 +231,4 @@ extern FILE      *obs_fp_ptr;
  **/
 extern RETURN_STATUS proc(opt_file_t* opt_file);
 
-
+extern RETURN_STATUS LSQ(fp64 *H, fp64 *R, fp64 *v, fp64 *dx, fp64 *P);
