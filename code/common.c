@@ -69,5 +69,6 @@ fp64 satazel(const fp64 *blh, const fp64 *e, fp64 *azel)
         el = asin(enu[2]);
     }
     if (azel) { azel[0] = az; azel[1] = el; }
+
     return el;
 }

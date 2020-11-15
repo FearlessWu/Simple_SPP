@@ -58,9 +58,9 @@ typedef struct
 /* receiver information */
 typedef struct
 {
-	char sta_name[60];
+    char sta_name[60];
     char rcv_type[20];
-	fp64 appro_pos[3];          /*!< approximate ecef pos */
+    fp64 appro_pos[3];          /*!< approximate ecef pos */
     fp64 atx_offset[3];         /*!< antenna delta: H/E/N */
     char gps_obs_type[20][4];
     char glo_obs_type[20][4];
