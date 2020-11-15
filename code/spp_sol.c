@@ -209,6 +209,107 @@ fp64 get_sv_clk_broadcast_eph(obs_epoch_t *obs_c, eph_sat_t *eph_sat, sat_info_t
 	return (eph_sat->sv_clk[0] + eph_sat->sv_clk[1] * delta_t + eph_sat->sv_clk[2] * delta_t * delta_t);
 	
 }
+static fp64 tropo_param_interpolation(fp64 phi, fp64 phi1, fp64 phi0, fp64 p1, fp64 p0)
+{
+	fp64 temp = (phi - phi0);
+	temp = temp / (phi1 - phi0);
+	temp = temp * (p1 - p0);
+	temp += p0;
+	return temp;
+}
+static fp64 get_tropo_param(int32_t index, fp64 phi_degree, int32_t doy)
+{
+	fp64 p0;
+	fp64 PDot;
+	fp64 temp;
+	uint8_t DayRef = 28;
+
+	const  fp64 TropoTable0[5][5] = {
+		{1013.25,    299.65,    26.31,    0.00630,    2.77},
+		{1017.25,    294.15,    21.79,    0.00605,    3.15},
+		{1015.75,    283.15,    11.66,    0.00558,    2.57},
+		{1011.75,    272.15,     6.78,    0.00539,    1.81},
+		{1013.00,    263.65,     4.11,    0.00453,    1.55} };
+
+	const  fp64 TropoTable1[5][5] = {
+		{0,        0,      0,    0,         0   },
+		{-3.75,    7.0,  8.85,    0.00025, 0.33},
+		{-2.25,    11.0, 7.24,    0.00032, 0.46},
+		{-1.75,    15.0, 5.36,    0.00081, 0.74},
+		{-0.50,    14.5, 3.39,    0.00062, 0.30} };
+
+	if (phi_degree < 0)
+	{
+		DayRef = 211;
+		phi_degree = -1 * phi_degree;
+	}
+
+	if (phi_degree < 15)
+	{
+		p0 = TropoTable0[0][index];
+		PDot = TropoTable1[0][index];
+	}
+	else if (phi_degree > 75)
+	{
+		p0 = TropoTable0[4][index];
+		PDot = TropoTable1[4][index];
+	}
+	else
+	{
+		int32_t phiIndex;
+		fp64 phi1_1, phi0_1;
+		phiIndex = (int)(phi_degree / 15.) - 1;
+		phi0_1 = (phiIndex + 1) * 15;
+		phi1_1 = phi0_1 + 15;
+		p0 = tropo_param_interpolation(phi_degree, phi1_1, phi0_1, TropoTable0[phiIndex + 1][index], TropoTable0[phiIndex][index]);
+		PDot = tropo_param_interpolation(phi_degree, phi1_1, phi0_1, TropoTable1[phiIndex + 1][index], TropoTable1[phiIndex][index]);
+	}
+
+	temp = 2 * PI * (doy - DayRef) / 365.25;
+	temp = cos(temp);
+	temp = temp * PDot;
+	temp = p0 - temp;
+	return temp;
+}
+static fp64 mops_tropo_delay(fp64 lat, fp64 h, fp64 ele, int32_t doy)
+{
+	fp64 temp = ele;
+	fp64 SinEl = sin(temp);
+	fp64 M;
+	fp64 d_dry = 0.0, d_wet = 0.0;
+	fp64 OneMBetaH, Rdp10_6, gDivRdBeta;
+	fp64 result = 0.0;
+
+	const fp64 k1 = 77.604;
+	const fp64 k2 = 382000;
+	const fp64 Rd = 287.054;
+	const fp64 gm = 9.784;
+	const fp64 g  = 9.80665;
+	const fp64 SpeedOfLight = 299792458.0;
+	
+	fp64 p, T, e, beta, lambda;
+	fp64  Lat_degree = (lat) * 180 / PI;
+
+	p =      get_tropo_param(0, Lat_degree, doy);
+	T =      get_tropo_param(1, Lat_degree, doy);
+	e =      get_tropo_param(2, Lat_degree, doy);
+	beta =   get_tropo_param(3, Lat_degree, doy);
+	lambda = get_tropo_param(4, Lat_degree, doy);
+
+	OneMBetaH = (1.0 - beta * h / T);
+	Rdp10_6 = 1E-6 * Rd * p;
+	gDivRdBeta = g / Rd / beta;
+	d_dry = pow(OneMBetaH, gDivRdBeta) * (Rdp10_6 * k1 / gm);
+	d_wet = pow(OneMBetaH, ((lambda + 1.0) * gDivRdBeta - 1.)) * (Rdp10_6 / p * k2 * e / T / (gm * (lambda + 1) - beta * Rd));
+	M = 1.001 / sqrt(0.002001 + SinEl * SinEl);
+
+	result = ((d_dry + d_wet) * M / SpeedOfLight);
+
+	if (isnan(result) || isinf(result) || fabs(result) > 1000.)
+		return 0;
+	else
+		return result;
+}
 RETURN_STATUS get_sv_pos_clk(obs_epoch_t *obs_c, eph_t *eph, sat_info_t *sat_info)
 {
 	int32_t i = 0;
