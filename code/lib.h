@@ -57,7 +57,7 @@ extern void time2epoch(fp64 time, fp64 *ep);
  * @retval       a'*b
  *-----------------------------------------------------------------------------
 */
-extern fp64 dot(const fp64 *a, const fp64 *b, int n);
+extern fp64 dot(const fp64 *a, const fp64 *b, int32_t n);
 
 /*
  *@brief        euclid norm of vector

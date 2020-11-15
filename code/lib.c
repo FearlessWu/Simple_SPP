@@ -1,7 +1,6 @@
 #pragma once
 #include "lib.h"
 
-
 fp64 epoch2time(const fp64 *ep)
 {
     const int doy[] = { 1,32,60,91,121,152,182,213,244,274,305,335 };
