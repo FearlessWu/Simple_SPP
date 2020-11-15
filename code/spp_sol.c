@@ -439,17 +439,17 @@ RETURN_STATUS spp_proc(obs_epoch_t* obs_c, sat_info_t* sat_info)
     int32_t i           = 0;
     int32_t iter_num    = 0;
     int32_t act_obs_num = 0;
-    fp64 *H, *R, *v, *dx, *P;
+    fp64 *H = NULL, *R = NULL, *v = NULL, *dx = NULL, *P = NULL;
 
     for (iter_num = 0; iter_num < 20; ++iter_num)
     {
         act_obs_num = Construct_H_R_V_matrix(obs_c, sat_info, H, R, v);
         LSQ(H, R, v, dx, P);
-        if (norm(dx, 3) < 1e-4)
-        {
-            // TODO: ouput result
-            break;
-        }
+        //if (norm(dx, 3) < 1e-4)
+        //{
+        //    // TODO: ouput result
+        //    break;
+        //}
     }
 
     

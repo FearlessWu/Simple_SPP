@@ -12,11 +12,11 @@ extern const char *error_message[];
 /* remove the newline symbol */
 static void remove_newline_symbol(char* in)
 {
-	char* tmp = NULL;
-	if ((tmp = strstr(in, "\n")))
-	{
-		*tmp = '\0';
-	}
+    char* tmp = NULL;
+    if ((tmp = strstr(in, "\n")))
+    {
+        *tmp = '\0';
+    }
 }
 
 /* add stop char */
@@ -45,11 +45,11 @@ static RETURN_STATUS read_opt_body(opt_file_t *opt_file, FILE *fp)
             remove_newline_symbol(opt_file->obs_file);
         }
 
-		if (strstr(buff, "nav_file_path") != NULL)
-		{
+        if (strstr(buff, "nav_file_path") != NULL)
+        {
             strncpy(opt_file->nav_file, buff + 22, 255);
             remove_newline_symbol(opt_file->nav_file);
-		}
+        }
     }
 
     return RET_SUCCESS;
@@ -75,19 +75,19 @@ RETURN_STATUS read_opt_file(opt_file_t  *opt_file, char *opt_path)
 
 RETURN_STATUS read_default_opt_file(opt_file_t *opt_file)
 {
-	FILE* opt_fp;
-	if (!(opt_fp = fopen("..//Simple_SPP//SPP.opt", "r")))
-	{
-		if (loger.is_open)
-		{
+    FILE* opt_fp;
+    if (!(opt_fp = fopen("..//Simple_SPP//SPP.opt", "r")))
+    {
+        if (loger.is_open)
+        {
             print_log(NULL, CANT_READ_OPT_FILE, error_message[CANT_READ_OPT_FILE]);
-		}
+        }
 
-		return RET_FAIL;
-	}
-	read_opt_body(opt_file, opt_fp);
+        return RET_FAIL;
+    }
+    read_opt_body(opt_file, opt_fp);
 
-	fclose(opt_fp);
+    fclose(opt_fp);
 
     return RET_SUCCESS;
 }
@@ -144,17 +144,17 @@ RETURN_STATUS read_option_file(opt_file_t *opt_file, int32_t args, char *opt_fil
 {
     RETURN_STATUS read_status = RET_FAIL;
 
-	switch (args)
-	{
-	case 1:
-		read_status = read_default_opt_file(opt_file);
-		break;
-	case 2:
-		read_status = read_opt_file(opt_file, opt_file_path);
-		break;
-	default:
-		return RET_FAIL;
-	}
+    switch (args)
+    {
+    case 1:
+        read_status = read_default_opt_file(opt_file);
+        break;
+    case 2:
+        read_status = read_opt_file(opt_file, opt_file_path);
+        break;
+    default:
+        return RET_FAIL;
+    }
 
     return read_status;
 }
@@ -170,10 +170,10 @@ RETURN_STATUS read_rinex_nav_data(char *nav_file_path, sys_ion_cor_t  *all_ion_c
     FILE* nav_fp_ptr;
     
     if (!(nav_fp_ptr = fopen(nav_file_path, "r")))
-	{
-		// TODO: debugout no nav file!
-		return RET_FAIL;
-	}
+    {
+        // TODO: debugout no nav file!
+        return RET_FAIL;
+    }
     *is_open_nav_file = true;
 
     memset(all_ion_cor, 0, sizeof(sys_ion_cor_t));
@@ -363,11 +363,11 @@ static RETURN_STATUS read_rinex_obs_header(char* obs_file_path, rcv_info_t* rcv_
     {
         return RET_SUCCESS;
     }
-	if (!(obs_fp_ptr = fopen(obs_file_path, "r")))
-	{
-		// TODO: do something when open obs file fail!
-		return RET_FAIL;
-	}
+    if (!(obs_fp_ptr = fopen(obs_file_path, "r")))
+    {
+        // TODO: do something when open obs file fail!
+        return RET_FAIL;
+    }
     *is_open_obs_file = true;
 
     char    buff[1024];
@@ -378,12 +378,12 @@ static RETURN_STATUS read_rinex_obs_header(char* obs_file_path, rcv_info_t* rcv_
     /* get rinex version */
     if ((fgets(buff, buff_size, obs_fp_ptr)) != NULL)
     {
-		if (strstr(buff, "RINEX VERSION / TYPE") != NULL)
-		{
-			strncpy(sub_buff, buff, 9);
+        if (strstr(buff, "RINEX VERSION / TYPE") != NULL)
+        {
+            strncpy(sub_buff, buff, 9);
             add_stop_char(sub_buff, 9);
             rnx_version = atof(sub_buff);
-		}
+        }
     }
     else
     {
@@ -396,15 +396,15 @@ static RETURN_STATUS read_rinex_obs_header(char* obs_file_path, rcv_info_t* rcv_
         return RET_FAIL;
     }
 
-	while ((fgets(buff, buff_size, obs_fp_ptr)) != NULL)
-	{
-		if (strstr(buff, "MARKER NAME") != NULL)
-		{
+    while ((fgets(buff, buff_size, obs_fp_ptr)) != NULL)
+    {
+        if (strstr(buff, "MARKER NAME") != NULL)
+        {
             strncpy(rcv_info->sta_name, buff, 4);
             add_stop_char(rcv_info->sta_name, 4);
 
             continue;
-		}
+        }
 
         if (strstr(buff, "END OF HEADER") != NULL)
         {
@@ -531,7 +531,7 @@ static RETURN_STATUS read_rinex_obs_header(char* obs_file_path, rcv_info_t* rcv_
             }
 
         }
-	}
+    }
 
     return RET_FAIL;
 }
@@ -707,6 +707,6 @@ RETURN_STATUS load_curr_rinex_obs(char *obs_file_path, obs_epoch_t *obs, uint8_t
         return RET_FAIL;
     }
     
-	return RET_SUCCESS;
+    return RET_SUCCESS;
 }
 
