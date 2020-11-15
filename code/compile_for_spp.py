@@ -1,4 +1,5 @@
 import os
+import sys
 
 Const_Image_Format = [".c", ".C"]
 
@@ -33,4 +34,11 @@ cmd += " -o spp"
 print(cmd)
 os.system(cmd)
 print("Compile Success! execute program is built in /code/spp.exe\n")
-os.system("pause")
+
+if sys.argv[1] == "-r":
+    cmd = "spp.exe " + os.getcwd().replace("code", "") + "SPP.opt"
+    print(cmd)
+    os.system(cmd)
+    os.system("pause")
+if sys.argv[1] == "-c":
+    os.system("pause")

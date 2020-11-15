@@ -17,7 +17,7 @@ RETURN_STATUS main(int32_t args, char *argv[])
     {   
         close_log_file();
     
-        return RET_FAIL;
+        //return RET_FAIL;
     }
     ret_status = proc(&opt_file);
     

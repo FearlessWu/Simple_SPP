@@ -466,6 +466,7 @@ RETURN_STATUS proc(opt_file_t *opt_file)
 
     while (is_run)
     {
+        printf("is runing\n");
         sat_info_t sat_info;
         init_sat_info(&sat_info);
 
