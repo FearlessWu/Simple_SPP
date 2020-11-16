@@ -310,7 +310,31 @@ static fp64 mops_tropo_delay(fp64 lat, fp64 h, fp64 ele, int32_t doy)
     else
         return result;
 }
+static void earth_rotate_corr(sat_info_t* sat_info, uint32_t sv_id, uint32_t sys_id, rcv_info_t* rcv_info)
+{
+    fp64 dx, dy, dz;
+    fp64 RotateAngle;
+    fp64 sin_temp, cos_temp, temp;
 
+    const fp64 WGS_OMEGDOTE = 7.2921151467e-5;
+    if (sys_id == SYS_GPS)
+    {
+        dx = sat_info->gps_sat[sv_id - 1].satpos[0] - rcv_info->appro_pos[0];
+        dy = sat_info->gps_sat[sv_id - 1].satpos[1] - rcv_info->appro_pos[1];
+        dz = sat_info->gps_sat[sv_id - 1].satpos[2] - rcv_info->appro_pos[2];
+        dx = (fp64)sqrt(dx * dx + dy * dy + dz * dz);
+        dx = dx / CLIGHT;
+        RotateAngle = dx * WGS_OMEGDOTE;
+        sin_temp = sin(RotateAngle);
+        cos_temp = cos(RotateAngle);
+        temp = sat_info->gps_sat[sv_id - 1].satpos[0] * cos_temp + sat_info->gps_sat[sv_id - 1].satpos[1] * sin_temp;
+        sat_info->gps_sat[sv_id - 1].satpos[1] = sat_info->gps_sat[sv_id - 1].satpos[1] * cos_temp - sat_info->gps_sat[sv_id - 1].satpos[0] * sin_temp;
+        sat_info->gps_sat[sv_id - 1].satpos[0] = temp;
+        temp = sat_info->gps_sat[sv_id - 1].satvel[0] * cos_temp + sat_info->gps_sat[sv_id - 1].satvel[1] * sin_temp;
+        sat_info->gps_sat[sv_id - 1].satvel[1] = sat_info->gps_sat[sv_id - 1].satvel[1] * cos_temp - sat_info->gps_sat[sv_id - 1].satvel[0] * sin_temp;
+        sat_info->gps_sat[sv_id - 1].satvel[0] = temp;
+    }
+}
 static fp64 broadcast_iono_delay(fp64 time, fp64 *blh, obs_sv_t *obs, sat_info_t *sat_info)
 {
     uint8_t i = 0;
