@@ -11,6 +11,8 @@
 */
 #pragma once
 #include <math.h>
+#include "Matrix.h"
+#include "common.h"
 
 #define OMGE        (7.2921151467E-5)       /* earth angular velocity (IS-GPS) (rad/s)*/
 #define FE_WGS84    (1.0/298.257223563)     /* earth flattening (WGS84) */
@@ -18,19 +20,6 @@
 #define PI          (3.1415926535897932)    /* pi */
 #define CLIGHT      (299792458.0)           /* light speed */
 
-/* redefine data type to adapt other platform */
-typedef signed char         int8_t;
-typedef unsigned char       uint8_t;
-typedef signed short        int16_t;
-typedef unsigned short      uint16_t;
-typedef int                 int32_t;
-typedef unsigned int        uint32_t;
-typedef long long           int64_t;
-typedef unsigned long long  uint64_t;
-typedef float               fp32;
-typedef double              fp64;
-typedef unsigned char       bool_t;
-typedef unsigned char       RETURN_STATUS;
 
 /**
   * @brief      convert calendar day/time to time
@@ -79,21 +68,50 @@ extern fp64 dot(const fp64 *a, const fp64 *b, int32_t n);
 extern fp64 norm(const fp64* a, int32_t n);
 
 /*
- *@brief            multiply matrix
- *@param[in]        tr   : transpose flag. the first char means the first input matrix transpose state, 
- *                         the second char means the second input matrix transpose state
- *@param[in]        n    : row size of matrix A
- *@param[in]        k    : col size of matrix B
- *@param[in]        m    : col/row size of matrix A/B
- *@param[in]        alpha: mlutiply factor
- *@param[in]        A    : front matrix
- *@param[in]        B    : back matrix
- *@param[in]        beta : mlutiply factor
- *@param[in/out]    C    : multiply matrix result
- *@retval           none
- *@note             if tr = "NN", C = alpha * (A  * B)  + beta * C
- *                  if tr = "TN", C = alpha * (AT * B)  + beta * C
- *                  if tr = "NT", C = alpha * (A  * BT) + beta * C
- *                  if tr = "TT", C = alpha * (AT * BT) + beta * C
+ *@brief        transform ecef to geodetic postion
+ *@auther       quote from RTKLIB
+ *@param[in]    xyz: ecef position {x,y,z} (m)
+ *@param[out]   blh: geodetic position {lat,lon,h} (rad,m)
+ *@retval       none
  **/
-extern void matmul(const char *tr, int32_t n, int32_t k, int32_t m, fp64 alpha,const fp64 *A, const fp64 *B, fp64 beta, fp64 *C);
+extern void xyz2blh(const fp64 *xyz, fp64 *blh);
+
+/*
+ *@brief        eometric distance and receiver-to-satellite unit vector
+ *@auther       quote from RTKLIB
+ *@param[in]    rs: satellilte position (ecef at transmission) (m)
+ *@param[in]    rr: receiver position (ecef at reception) (m)
+ *@param[out]   e : line-of-sight vector (ecef)
+ *@retval       geometric distance (m) (0>:error/no satellite position)
+ *@note         distance includes sagnac effect correction
+ **/
+extern fp64 geodist(const fp64* rs, const fp64* rr, fp64* e);
+
+/*
+ *@brief        compute ecef to local coordinate transfromation matrix
+ *@auther       quote from RTKLIB
+ *@param[in]    blh: geodetic position {lat,lon} (rad)
+ *@param[out]   E  : ecef to local coord transformation matrix (3x3)
+ *@retval       none
+ **/
+extern void xyz2enu(const fp64 *blh, fp64 *E);
+
+/*
+ *@brief        transform ecef vector to local tangental coordinate
+ *@author       quote from RTKLIB
+ *@param[in]    blh: geodetic position {lat,lon} (rad)
+ *@param[in]    r  : vector in ecef coordinate {x,y,z}
+ *@param[out]   e  : vector in local tangental coordinate {e,n,u}
+ *@retval       none
+ * */
+extern void ecef2enu(const fp64 *blh, const fp64 *r, fp64 *e);
+
+/*
+ *@brief        compute satellite azimuth/elevation angle
+ *@auther       quote from RTKLIB
+ *@param[in]    blh : geodetic position {lat,lon,h} (rad,m)
+ *@param[in]    e   : receiver-to-satellilte unit vevtor (ecef)
+ *@param[out]   azel: azimuth/elevation {az,el} (rad) (NULL: no output)
+ *@retval       elevation angle (rad)
+ **/
+extern fp64 satazel(const fp64 *blh, const fp64 *e, fp64 *azel);

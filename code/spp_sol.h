@@ -12,10 +12,8 @@
   ***************************************(C) COPYRIGHT 2020 Wyatt Wu***********************************               
 */
 #pragma once
-#include "stdio.h"
+
 #include "common.h"
-#include "stdbool.h"
-#include "stdlib.h"
 #include "lib.h"
 
 #define MAXSYS          (4)  // number of system

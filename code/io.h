@@ -17,7 +17,6 @@
 
 #pragma once
 #include <string.h>
-#include "common.h"
 #include "spp_sol.h"
 
 extern RETURN_STATUS read_opt_file(opt_file_t *opt_file, char *opt_path);
