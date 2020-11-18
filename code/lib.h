@@ -10,9 +10,7 @@
   ***************************************(C) COPYRIGHT 2020 Wyatt Wu***********************************
 */
 #pragma once
-#include <math.h>
 #include "Matrix.h"
-#include "common.h"
 
 #define OMGE        (7.2921151467E-5)       /* earth angular velocity (IS-GPS) (rad/s)*/
 #define FE_WGS84    (1.0/298.257223563)     /* earth flattening (WGS84) */

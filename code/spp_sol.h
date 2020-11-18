@@ -12,8 +12,6 @@
   ***************************************(C) COPYRIGHT 2020 Wyatt Wu***********************************               
 */
 #pragma once
-
-#include "common.h"
 #include "lib.h"
 
 #define MAXSYS          (4)  // number of system
@@ -182,12 +180,6 @@ typedef enum
     NOT_USE = 0,
     USE     = 1
 } obs_status_t;
-
-typedef enum
-{
-    RET_FAIL    = 0,
-    RET_SUCCESS = 1
-} ret_status_t;
 
 typedef enum
 {

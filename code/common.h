@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <math.h>
 
 /* redefine data type to adapt other platform */
 typedef signed char         int8_t;
@@ -27,4 +28,10 @@ typedef float               fp32;
 typedef double              fp64;
 typedef unsigned char       bool_t;
 typedef unsigned char       RETURN_STATUS;
+
+typedef enum
+{
+    RET_FAIL    = 0,
+    RET_SUCCESS = 1,
+} ret_status_t;
 

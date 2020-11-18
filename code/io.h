@@ -7,16 +7,10 @@
   * @history
   * Version      Date               Author               Modification
   * V1.0.0       Oct-25-2020     Wyatt Wu/PQiu        1. establih this file
-  @verbatim
-  =====================================================================================================
-
-  =====================================================================================================
-  @endverbatim
   ************************************(C) COPYRIGHT 2020 Wyatt Wu/PQiu***********************************
   */
 
 #pragma once
-#include <string.h>
 #include "spp_sol.h"
 
 extern RETURN_STATUS read_opt_file(opt_file_t *opt_file, char *opt_path);
