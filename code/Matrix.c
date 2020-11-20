@@ -309,6 +309,7 @@ RETURN_STATUS matrix_init(matrix_t *matrix, const uint32_t row, const uint32_t c
 
     return RET_SUCCESS;
 }
+
 RETURN_STATUS matrix_free(matrix_t *matrix)
 {
     if (matrix->row <= 0 || matrix->col <= 0 || matrix->is_valid == 0)
@@ -330,6 +331,7 @@ RETURN_STATUS matrix_free(matrix_t *matrix)
     
     return RET_SUCCESS;
 }
+
 extern RETURN_STATUS matrix_add(matrix_t *mat_in_1, matrix_t *mat_in_2, matrix_t *mat_out)
 {
     if ((mat_in_1->row != mat_in_2->row) || (mat_in_1->col != mat_in_2->col) 
@@ -410,7 +412,27 @@ RETURN_STATUS matrix_inv(matrix_t *mat_in, matrix_t *mat_out)
     return RET_SUCCESS;
 }
 
+RETURN_STATUS matrix_trs(matrix_t* mat_in, matrix_t* mat_out)
+{
+    if (mat_in->row  <= 0 || mat_in->col  <= 0 || !mat_in->is_valid  || mat_in->col !=mat_out->row
+     || mat_out->row <= 0 || mat_out->col <= 0 || !mat_out->is_valid || mat_in->row != mat_out->col)
+    {
+        // TODO: print32_t log
+        return RET_FAIL;
+    }
 
+    uint32_t i, j;
+
+    for (i = 0; i < mat_in->row; ++i)
+    {
+        for (j = 0; j < mat_in->col; ++j)
+        {
+            mat_out->element[j][i] = mat_in->element[i][j];
+        }
+    }
+
+    return RET_SUCCESS;
+}
 
 void matrix_print(matrix_t matrix)
 {
