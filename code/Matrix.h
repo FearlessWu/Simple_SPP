@@ -32,6 +32,8 @@ typedef struct
 extern void matmul(const char* tr, int32_t n, int32_t k, int32_t m, fp64 alpha, const fp64 *A, 
                    const fp64 *B, fp64 beta, fp64 *C);
 
+extern int32_t matinv(fp64 *A, int32_t n);
+
 extern RETURN_STATUS matrix_init(matrix_t *matrix, const uint32_t row, const uint32_t col);
 
 extern RETURN_STATUS matrix_free(matrix_t *matrix);
