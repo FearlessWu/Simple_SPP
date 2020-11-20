@@ -24,6 +24,9 @@
     <ClInclude Include="code\spp_sol.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="code\Matrix.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="code\io.c">
@@ -39,6 +42,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="code\spp_sol.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="code\Matrix.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
