@@ -53,7 +53,6 @@ fp64 time2gpst(fp64 t, int32_t *week)
     return (fp64)(sec - (fp64)w * 86400 * 7);
 }
 
-
 fp64 dot(const fp64 *a, const fp64 *b, int32_t n)
 {
     fp64 c = 0.0;
@@ -66,7 +65,6 @@ fp64 norm(const fp64 *a, int32_t n)
 {
     return sqrt(dot(a, a, n));
 }
-
 
 void xyz2blh(const fp64* xyz, fp64* blh)
 {
@@ -89,7 +87,6 @@ void xyz2blh(const fp64* xyz, fp64* blh)
     blh[1] = r2 > 1E-12 ? atan2(xyz[1], xyz[0]) : 0.0;
     blh[2] = sqrt(r2 + z * z) - v;
 }
-
 
 fp64 geodist(const fp64* rs, const fp64* rr, fp64* e)
 {
@@ -139,4 +136,28 @@ fp64 satazel(const fp64 *blh, const fp64 *e, fp64 *azel)
     if (azel) { azel[0] = az; azel[1] = el; }
 
     return el;
+}
+
+uint32_t syssat_to_gnsssat(const uint32_t sys, const uint32_t sat_id)
+{
+    uint32_t gnss_id = 0;
+    switch (sys)
+    {
+    case SYS_GPS:
+        gnss_id = sat_id;
+        break;
+    case SYS_GLO:
+        gnss_id = sat_id + MAXGPSNUM;
+        break;
+    case SYS_GAL:
+        gnss_id = sat_id + MAXGPSNUM + MAXGLONUM;
+        break;
+    case SYS_BDS:
+        gnss_id = sat_id + MAXGPSNUM + MAXGLONUM + MAXGALNUM;
+        break;
+    default:
+        break;  // not expect jump into here
+    }
+
+    return gnss_id;
 }

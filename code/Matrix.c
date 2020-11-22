@@ -332,7 +332,30 @@ RETURN_STATUS matrix_free(matrix_t *matrix)
     return RET_SUCCESS;
 }
 
-extern RETURN_STATUS matrix_add(matrix_t *mat_in_1, matrix_t *mat_in_2, matrix_t *mat_out)
+RETURN_STATUS matrix_resize(matrix_t* mat, const uint32_t row, const uint32_t col)
+{
+    if (mat->is_valid || mat->col <= 0 || mat->row <= 0)
+    {
+        if (!matrix_init(mat, row, col))
+        {
+            return RET_FAIL;
+        }
+
+        return RET_SUCCESS;
+    }
+    else
+    {
+        matrix_free(mat);
+        if (!matrix_init(mat, row, col))
+        {
+            return RET_FAIL;
+        }
+
+        return RET_SUCCESS;
+    }
+}
+
+RETURN_STATUS matrix_add(matrix_t *mat_in_1, matrix_t *mat_in_2, matrix_t *mat_out)
 {
     if ((mat_in_1->row != mat_in_2->row) || (mat_in_1->col != mat_in_2->col) 
      || (mat_in_1->row != mat_out->row)  || (mat_in_1->col != mat_out->col) 
@@ -356,7 +379,7 @@ extern RETURN_STATUS matrix_add(matrix_t *mat_in_1, matrix_t *mat_in_2, matrix_t
      return RET_SUCCESS;
 }
 
-extern RETURN_STATUS matrix_miu(matrix_t *mat_in_1, matrix_t *mat_in_2, matrix_t *mat_out)
+RETURN_STATUS matrix_miu(matrix_t *mat_in_1, matrix_t *mat_in_2, matrix_t *mat_out)
 {
     if ((mat_in_1->row != mat_in_2->row) || (mat_in_1->col != mat_in_2->col) 
      || (mat_in_1->row != mat_out->row)  || (mat_in_1->col != mat_out->col) 

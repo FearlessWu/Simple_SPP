@@ -17,7 +17,23 @@
 #define RE_WGS84    (6378137.0)             /* earth semimajor axis (WGS84) (m)*/
 #define PI          (3.1415926535897932)    /* pi */
 #define CLIGHT      (299792458.0)           /* light speed */
+#define MAXSYS          (4)                 // number of system
+#define FREQ_NUM        (2)                 // number of frequency
+#define MAXOBS          (256)               // the maximum observation number
+#define MAXBROEPH       (30)                // the maximun number of epoch of broadcast ephemeris
 
+#define MAXGPSNUM       (32)
+#define MAXGLONUM       (27)
+#define MAXGALNUM       (30)
+#define MAXBDSNUM       (50)
+
+#define SYS_NON         (0x00)
+#define SYS_GPS         (0x01)
+#define SYS_GLO         (0x02)
+#define SYS_GAL         (0x04)
+#define SYS_BDS         (0x08)
+#define VERY_BIG_NUM    (99999999.0)
+#define VERY_SMALL_NUM  (-99999999.0)
 
 /**
   * @brief      convert calendar day/time to time
@@ -113,3 +129,12 @@ extern void ecef2enu(const fp64 *blh, const fp64 *r, fp64 *e);
  *@retval       elevation angle (rad)
  **/
 extern fp64 satazel(const fp64 *blh, const fp64 *e, fp64 *azel);
+
+/*
+ *@brief        convert sat id in single sysem to sat id in gnss system
+ *@auther       wyatt.wu
+ *@param[in]    sys    : system
+ *@param[in]    sat_id : sat id in system
+ *@retval       sat id in gnss system
+ **/
+extern uint32_t syssat_to_gnsssat(const uint32_t sys, const uint32_t sat_id);

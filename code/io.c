@@ -613,7 +613,7 @@ static RETURN_STATUS read_rinex_obs_body(obs_epoch_t *obs, uint8_t *is_run)
             return RET_FAIL;
         }
 #endif
-        obs->obs_num = 0;
+        obs->sv_num = 0;
         for (i = 0; i < sv_num; ++i)
         {
             if (fgets(buff, buff_size, obs_fp_ptr) != NULL)
@@ -623,10 +623,10 @@ static RETURN_STATUS read_rinex_obs_body(obs_epoch_t *obs, uint8_t *is_run)
                 {
                     continue;
                 }
-                obs->obs[obs->obs_num].sys_id = SYS_GPS;
+                obs->obs[obs->sv_num].sys_id = SYS_GPS;
                 strncpy(sub_buff, buff + 1, 2);
                 add_stop_char(sub_buff, 2);
-                obs->obs[obs->obs_num].sv_id = atoi(sub_buff);
+                obs->obs[obs->sv_num].sv_id = atoi(sub_buff);
 
                 int32_t j;
                 for (j = 0; j < 2; ++j)
@@ -635,57 +635,57 @@ static RETURN_STATUS read_rinex_obs_body(obs_epoch_t *obs, uint8_t *is_run)
                     int32_t k = 3 + (gps_type_idx[j] - 1) * 16;
                     strncpy(sub_buff, buff + k, 14);
                     add_stop_char(sub_buff, 14);
-                    obs->obs[obs->obs_num].P[j] = atof(sub_buff);
-                    if (fabs(obs->obs[obs->obs_num].P[j]) > 0.001)
+                    obs->obs[obs->sv_num].P[j] = atof(sub_buff);
+                    if (fabs(obs->obs[obs->sv_num].P[j]) > 0.001)
                     {
-                        obs->obs[obs->obs_num].P_status[j] = USE;
+                        obs->obs[obs->sv_num].P_status[j] = USE;
                     }
                     else
                     {
-                        obs->obs[obs->obs_num].P_status[j] = NOT_USE;
+                        obs->obs[obs->sv_num].P_status[j] = NOT_USE;
                     }
                     
                     /* phase */
                     k += 16;
                     strncpy(sub_buff, buff + k, 14);
                     add_stop_char(sub_buff, 14);
-                    obs->obs[obs->obs_num].L[j] = atof(sub_buff);
-                    if (fabs(obs->obs[obs->obs_num].L[j]) > 0.001)
+                    obs->obs[obs->sv_num].L[j] = atof(sub_buff);
+                    if (fabs(obs->obs[obs->sv_num].L[j]) > 0.001)
                     {
-                        obs->obs[obs->obs_num].L_status[j] = USE;
+                        obs->obs[obs->sv_num].L_status[j] = USE;
                     }
                     else
                     {
-                        obs->obs[obs->obs_num].L_status[j] = NOT_USE;
+                        obs->obs[obs->sv_num].L_status[j] = NOT_USE;
                     }
 
                     /* LLI */
                     strncpy(sub_buff, buff + k +14, 1);
                     add_stop_char(sub_buff, 1);
-                    obs->obs[obs->obs_num].LLI[j] = atoi(sub_buff);
+                    obs->obs[obs->sv_num].LLI[j] = atoi(sub_buff);
 
                     /* signal strength */
                     k += 16;
                     strncpy(sub_buff, buff + k, 14);
                     add_stop_char(sub_buff, 14);
-                    obs->obs[obs->obs_num].D[j] = atof(sub_buff);
-                    if (fabs(obs->obs[obs->obs_num].D[j]) > 0.001)
+                    obs->obs[obs->sv_num].D[j] = atof(sub_buff);
+                    if (fabs(obs->obs[obs->sv_num].D[j]) > 0.001)
                     {
-                        obs->obs[obs->obs_num].D_status[j] = USE;
+                        obs->obs[obs->sv_num].D_status[j] = USE;
                     }
                     else
                     {
-                        obs->obs[obs->obs_num].D_status[j] = NOT_USE;
+                        obs->obs[obs->sv_num].D_status[j] = NOT_USE;
                     }
 
                     /* signal strength */
                     k += 16;
                     strncpy(sub_buff, buff + k, 14);
                     add_stop_char(sub_buff, 14);
-                    obs->obs[obs->obs_num].CN0[j] = atof(sub_buff);
+                    obs->obs[obs->sv_num].CN0[j] = atof(sub_buff);
                 }
             }
-            obs->obs_num++;
+            obs->sv_num++;
         }
         return RET_SUCCESS;
     }

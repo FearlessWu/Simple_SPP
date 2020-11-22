@@ -14,26 +14,6 @@
 #pragma once
 #include "lib.h"
 
-#define MAXSYS          (4)  // number of system
-#define FREQ_NUM        (2)  // number of frequency
-#define MAXOBS          (256)// the maximum observation number
-#define MAXBROEPH       (30) // the maximun number of epoch of broadcast ephemeris
-
-#define MAXGPSNUM       (32)
-#define MAXGLONUM       (27)
-#define MAXGALNUM       (30)
-#define MAXBDSNUM       (50)
-
-#define SYS_NON         (0x00)
-#define SYS_GPS         (0x01)
-#define SYS_GLO         (0x02)
-#define SYS_GAL         (0x04)
-#define SYS_BDS         (0x08)
-#define VERY_BIG_NUM    (99999999.0)
-#define VERY_SMALL_NUM  (-99999999.0)
-
-
-
 /* observation of a single satellite */
 typedef struct
 {
@@ -71,7 +51,7 @@ typedef struct
     fp64        ep[6];          /*!< epoch time */
     uint8_t     epoch_flag;     /*!< 0: OK, 1:power failure between previous and current epoch */
     fp64        rcv_clk_offset; /*!< Receiver clock offset, uint: sec */
-    int32_t     obs_num;        /*!< the number of actual observation */
+    int32_t     sv_num;         /*!< the number of actual observation satellite*/
     obs_sv_t    obs[60];        /*!< all satellite obs data in obs file */
     rcv_info_t  rcv_info;       /*!< record receiver information */
 } obs_epoch_t;
@@ -127,7 +107,8 @@ typedef struct
     fp64        satclk[2];
     fp64        el;
     fp64        transtime;
-    fp64        var;
+    fp64        pos_var;
+    uint8_t     is_vaild;
 } single_sat_info_t;
 
 
@@ -159,13 +140,14 @@ typedef struct
 
 typedef struct
 {
-    fp64  pos[3];
-    fp64  vel[3];
+    fp64  pos[3];       // ecef
+    fp64  vel[3];       
     fp64  dt[2];
     fp64  pos_neu[3];
     fp64  vel_neu[3];
     fp64  blh[3];
     fp64  rcv_time;
+    fp64  ep[6];
 } spp_sol_t;
 
 typedef struct
@@ -221,4 +203,4 @@ extern FILE      *obs_fp_ptr;
  **/
 extern RETURN_STATUS proc(opt_file_t* opt_file);
 
-extern RETURN_STATUS LSQ(fp64 *H, fp64 *R, fp64 *v, fp64 *dx, fp64 *P);
+extern RETURN_STATUS LSQ(matrix_t *H, matrix_t *R, matrix_t *v, matrix_t  *dx, matrix_t *P);

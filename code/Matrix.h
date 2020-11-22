@@ -36,6 +36,8 @@ extern int32_t matinv(fp64 *A, int32_t n);
 
 extern RETURN_STATUS matrix_init(matrix_t *matrix, const uint32_t row, const uint32_t col);
 
+extern RETURN_STATUS matrix_resize(matrix_t *mat, const uint32_t row, const uint32_t col);
+
 extern RETURN_STATUS matrix_free(matrix_t *matrix);
 
 extern RETURN_STATUS matrix_mlt(matrix_t *mat_in_1, matrix_t *mat_in_2, matrix_t *mat_out);

@@ -76,6 +76,7 @@ eph_sat_t sel_broadcast_eph(fp64 time, int32_t sys_id, int32_t sat_id, eph_t *ep
     }
     return eph_sat;
 }
+
 RETURN_STATUS get_sat_pos_broadcast_eph(eph_sat_t *eph_sat, fp64 *sat_pos, fp64 *sat_clk, fp64 time, fp64 *var)
 {
     if (!eph_sat->nav_valid || (eph_sat->sv_hea))
@@ -155,6 +156,7 @@ RETURN_STATUS get_sat_pos_broadcast_eph(eph_sat_t *eph_sat, fp64 *sat_pos, fp64 
 
     return RET_SUCCESS;
 }
+
 fp64 get_sv_clk_broadcast_eph(obs_epoch_t *obs_c, eph_sat_t *eph_sat, sat_info_t *sat_info)
 {
     fp64 delta_t;
@@ -173,14 +175,14 @@ fp64 get_sv_clk_broadcast_eph(obs_epoch_t *obs_c, eph_sat_t *eph_sat, sat_info_t
     /* save Toc */
     eph_sat->Toc = eph_time;
 
-    for (k = 0; k < obs_c->obs_num; ++k)
+    for (k = 0; k < obs_c->sv_num; ++k)
     {
         if (eph_sat->sv_id == obs_c->obs[k].sv_id && eph_sat->sys_id == obs_c->obs[k].sys_id)
         {
             break;
         }
     }
-    if (k == obs_c->obs_num)
+    if (k == obs_c->sv_num)
     {
         // TODO: do something
         return RET_FAIL;
@@ -209,6 +211,7 @@ fp64 get_sv_clk_broadcast_eph(obs_epoch_t *obs_c, eph_sat_t *eph_sat, sat_info_t
     return (eph_sat->sv_clk[0] + eph_sat->sv_clk[1] * delta_t + eph_sat->sv_clk[2] * delta_t * delta_t);
     
 }
+
 static fp64 tropo_param_interpolation(fp64 phi, fp64 phi1, fp64 phi0, fp64 p1, fp64 p0)
 {
     fp64 temp = (phi - phi0);
@@ -217,6 +220,7 @@ static fp64 tropo_param_interpolation(fp64 phi, fp64 phi1, fp64 phi0, fp64 p1, f
     temp += p0;
     return temp;
 }
+
 static fp64 get_tropo_param(int32_t index, fp64 phi_degree, int32_t doy)
 {
     fp64 p0;
@@ -271,6 +275,7 @@ static fp64 get_tropo_param(int32_t index, fp64 phi_degree, int32_t doy)
     temp = p0 - temp;
     return temp;
 }
+
 static fp64 mops_tropo_delay(fp64 lat, fp64 h, fp64 ele, int32_t doy)
 {
     fp64 temp = ele;
@@ -310,6 +315,7 @@ static fp64 mops_tropo_delay(fp64 lat, fp64 h, fp64 ele, int32_t doy)
     else
         return result;
 }
+
 static void earth_rotate_corr(sat_info_t* sat_info, uint32_t sv_id, uint32_t sys_id, rcv_info_t* rcv_info)
 {
     fp64 dx, dy, dz;
@@ -335,6 +341,7 @@ static void earth_rotate_corr(sat_info_t* sat_info, uint32_t sv_id, uint32_t sys
         sat_info->gps_sat[sv_id - 1].satvel[0] = temp;
     }
 }
+
 static fp64 broadcast_iono_delay(fp64 time, fp64 *blh, obs_sv_t *obs, sat_info_t *sat_info)
 {
     uint8_t i = 0;
@@ -401,7 +408,7 @@ static fp64 broadcast_iono_delay(fp64 time, fp64 *blh, obs_sv_t *obs, sat_info_t
 RETURN_STATUS get_sv_pos_clk(obs_epoch_t *obs_c, eph_t *eph, sat_info_t *sat_info)
 {
     int32_t i = 0;
-    for (i = 0; i < obs_c->obs_num; ++i)
+    for (i = 0; i < obs_c->sv_num; ++i)
     {
         eph_sat_t eph_sat;
         fp64 sat_clk = 0;
@@ -426,6 +433,7 @@ RETURN_STATUS get_sv_pos_clk(obs_epoch_t *obs_c, eph_t *eph, sat_info_t *sat_inf
             sat_info->gps_sat[obs_c->obs[i].sv_id - 1].satpos[j] = sat_pos[j];
         }
         sat_info->gps_sat[obs_c->obs[i].sv_id - 1].satclk[0] = sat_clk;
+        sat_info->gps_sat[obs_c->obs[i].sv_id - 1].pos_var = var;
 
         /* calculate satellite velocity and clock drift */
         time_s  = time_c - 1E-3;
@@ -436,39 +444,108 @@ RETURN_STATUS get_sv_pos_clk(obs_epoch_t *obs_c, eph_t *eph, sat_info_t *sat_inf
             sat_info->gps_sat[obs_c->obs[i].sv_id - 1].satvel[j] = (sat_info->gps_sat[obs_c->obs[i].sv_id - 1].satpos[j] - sat_pos[j]) / 1E-3;
         }
         sat_info->gps_sat[obs_c->obs[i].sv_id - 1].satclk[1] = (sat_info->gps_sat[obs_c->obs[i].sv_id - 1].satclk[0] - sat_clk) / 1E-3;
+        sat_info->gps_sat[obs_c->obs[i].sv_id - 1].is_vaild  = true;
     }
     
     return RET_SUCCESS;
 }
+
 static void init_sat_info(sat_info_t *sat_info)
 {
     int32_t i;
     memset(sat_info, 0, sizeof(sat_info_t));
     for (i = 0; i < MAXGPSNUM; ++i)
     {
-        sat_info->gps_sat[i].sys_id = SYS_GPS;
-        sat_info->gps_sat[i].sv_id  = i + 1;
+        sat_info->gps_sat[i].sys_id   = SYS_GPS;
+        sat_info->gps_sat[i].sv_id    = i + 1;
+        sat_info->gps_sat[i].is_vaild = false;
     }
 }
-static int32_t Construct_H_R_V_matrix(obs_epoch_t *obs, sat_info_t *sat_info, fp64 *H, fp64 *R, fp64 *v)
+
+static int32_t pre_residual_deterct(obs_epoch_t *obs, sat_info_t *sat_info)
 {
+    int32_t obs_num = 0;
+
+    return obs_num;
+}
+
+static void get_rs_clk(const uint32_t sys_id, const uint32_t sv_id, fp64 *rs, fp64 *sat_clk, const sat_info_t *sat_info)
+{
+    uint32_t i;
+    switch (sys_id)
+    {
+    case SYS_GPS:
+        for (i = 0; i < 3; ++i)
+        {
+            rs[i] = sat_info->gps_sat[sv_id - 1].satpos[i];
+            if (i < 2)
+            {
+                sat_clk[i] = sat_info->gps_sat[sv_id - 1].satclk[i];
+            }
+        }
+        break;
+    default:
+        break;
+    }
+}
+static int32_t Construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, const spp_sol_t *spp_sol, matrix_t *H, 
+                                      matrix_t *R, matrix_t *v, uint8_t spp_init)
+{
+    int32_t i;
+    int32_t obs_num = 0;
+    fp64    blh[3]  = { 0 };
+    fp64    xyz[3]  = { 0 };
+    fp64    e[3]    = { 0 };
+    fp64    r       = 0;
+
+    if (!spp_init)
+    {
+        for (i = 0; i < 3; ++i) xyz[i] = obs_c->rcv_info.appro_pos[i];
+    }
+    else
+    {
+        for (i = 0; i < 3; ++i) xyz[i] = spp_sol->pos[i];
+    }
+
+    obs_num = obs_c->sv_num;
+ 
+    for (i = 0; i < obs_c->sv_num; ++i)
+    {
+        fp64 azel[2]    = { 0 };
+        fp64 rs[3]      = { 0 };
+        fp64 sat_clk[2] = { 0 };
+        uint32_t gnss_id;
+        obs_sv_t *obs = &obs_c->obs[i];
+        gnss_id = syssat_to_gnsssat(obs->sys_id, obs->sv_id);
+        get_rs_clk(obs->sys_id, obs->sv_id, rs, sat_clk, sat_info);
+        
+        if (spp_init)
+        {
+            pre_residual_deterct(obs, sat_info);
+        }
+    }
     return 0;
 }
-RETURN_STATUS LSQ(fp64 *H, fp64 *R, fp64 *v, fp64 *dx, fp64 *P)
+
+RETURN_STATUS LSQ(matrix_t *H, matrix_t *R, matrix_t *v, matrix_t  *dx, matrix_t *P)
 {
     return RET_SUCCESS;
 }
-RETURN_STATUS spp_proc(obs_epoch_t* obs_c, sat_info_t* sat_info)
+
+static RETURN_STATUS spp_proc(obs_epoch_t *obs_c, sat_info_t *sat_info, spp_sol_t *spp_sol)
 {
-    int32_t i           = 0;
-    int32_t iter_num    = 0;
-    int32_t act_obs_num = 0;
-    fp64 *H = NULL, *R = NULL, *v = NULL, *dx = NULL, *P = NULL;
+    int32_t i                   = 0;
+    int32_t iter_num            = 0;
+    int32_t act_obs_num         = 0;
+    int32_t obs_num             = 0;
+    static uint8_t spp_init     = false;
+
+    matrix_t H, R,  v, dx, P;
 
     for (iter_num = 0; iter_num < 20; ++iter_num)
     {
-        act_obs_num = Construct_H_R_V_matrix(obs_c, sat_info, H, R, v);
-        LSQ(H, R, v, dx, P);
+        Construct_H_R_V_matrix(obs_c, sat_info, &H, &R, &v, &spp_sol, spp_init);
+        LSQ(&H, &R, &v, &dx, &P);
         //if (norm(dx, 3) < 1e-4)
         //{
         //    // TODO: ouput result
@@ -476,17 +553,19 @@ RETURN_STATUS spp_proc(obs_epoch_t* obs_c, sat_info_t* sat_info)
         //}
     }
 
-    
+    spp_init = true;
+
     return RET_SUCCESS;
 }
 
 RETURN_STATUS proc(opt_file_t *opt_file)
 {
     RETURN_STATUS ret_status       = false;
-    uint8_t          is_open_obs_file = false;    // false: obs file has been opened; true: has not been opened.
-    uint8_t          is_open_nav_file = false;
-    uint8_t          is_run           = true;
-    uint8_t          is_fist_run       = true;
+    uint8_t       is_open_obs_file = false;    // false: obs file has been opened; true: has not been opened.
+    uint8_t       is_open_nav_file = false;
+    uint8_t       is_run           = true;
+    uint8_t       is_fist_run      = true;
+    spp_sol_t     spp_sol          = {0};
 
     while (is_run)
     {
@@ -504,7 +583,7 @@ RETURN_STATUS proc(opt_file_t *opt_file)
         }
         get_sv_pos_clk(&obs_c, &eph, &sat_info);
         
-        spp_proc(&obs_c, &sat_info);
+        spp_proc(&obs_c, &sat_info, &spp_sol);
     }
     
     return RET_SUCCESS;
