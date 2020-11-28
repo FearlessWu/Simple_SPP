@@ -1,3 +1,4 @@
+
 #include "Matrix.h"
 
 static void matcpy(fp64* A, const fp64* B, int32_t n, int32_t m)
@@ -59,7 +60,7 @@ static void lubksb(const fp64* A, int32_t n, const int32_t* indx, fp64* b)
     }
 }
 
-static int32_t ludcmp(fp64* A, int32_t n, int32_t* indx, fp64* d)
+static int32_t ludcmp(fp64 *A, int32_t n, int32_t *indx, fp64 *d)
 {
     fp64 big, s, tmp, * vv = mat(n, 1);
     int32_t i, imax = 0, j, k;
@@ -435,12 +436,12 @@ RETURN_STATUS matrix_inv(matrix_t *mat_in, matrix_t *mat_out)
     return RET_SUCCESS;
 }
 
-RETURN_STATUS matrix_trs(matrix_t* mat_in, matrix_t* mat_out)
+RETURN_STATUS matrix_trs(matrix_t *mat_in, matrix_t *mat_out)
 {
     if (mat_in->row  <= 0 || mat_in->col  <= 0 || !mat_in->is_valid  || mat_in->col !=mat_out->row
      || mat_out->row <= 0 || mat_out->col <= 0 || !mat_out->is_valid || mat_in->row != mat_out->col)
     {
-        // TODO: print32_t log
+        // TODO: print log
         return RET_FAIL;
     }
 
@@ -453,6 +454,66 @@ RETURN_STATUS matrix_trs(matrix_t* mat_in, matrix_t* mat_out)
             mat_out->element[j][i] = mat_in->element[i][j];
         }
     }
+
+    return RET_SUCCESS;
+}
+
+RETURN_STATUS matrix_copy(const matrix_t *mat_in, matrix_t *mat_out)
+{
+    if (mat_in->row <= 0 || mat_in->col <= 0 || !mat_in->is_valid || mat_out->row <= 0 || mat_out->col <= 0 || !mat_out->is_valid)
+    {
+        // TODO: report error
+        return RET_FAIL;
+    }
+
+    if (mat_in->col != mat_out->col || mat_in->row != mat_out->row)
+    {
+        // TODO: report error
+        return RET_FAIL;
+    }
+
+    uint32_t i, j;
+    for (i = 0; i < mat_in->row; ++i)
+    {
+        for (j = 0; j < mat_in->col; ++j)
+        {
+            mat_out->element[i][j] = mat_in->element[i][j];
+        }
+    }
+  
+    return RET_SUCCESS;
+}
+
+RETURN_STATUS matrix_extend_one_col(matrix_t *mat)
+{
+    if (mat->col <= 0 || mat->row <= 0 || !mat->is_valid)
+    {
+        // TODO: report error
+        return RET_FAIL;
+    }
+
+    matrix_t tmp;
+    if (!matrix_init(&tmp, mat->row, mat->row))
+    {
+        // TODO: report error
+        return RET_FAIL;
+    }
+    matrix_copy(mat, &tmp);
+    if (!matrix_resize(mat, mat->row, (mat->col + 1)))
+    {
+        // TODO: report error
+        return RET_FAIL;
+    }
+
+    uint32_t i, j;
+    for (i = 0; i < tmp.row; ++i)
+    {
+        for (j = 0; j < tmp.col; ++j)
+        {
+            mat->element[i][j] = tmp.element[i][j];
+        }
+    }
+    matrix_free(&tmp);
 
     return RET_SUCCESS;
 }

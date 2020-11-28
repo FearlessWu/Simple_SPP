@@ -138,3 +138,11 @@ extern fp64 satazel(const fp64 *blh, const fp64 *e, fp64 *azel);
  *@retval       sat id in gnss system
  **/
 extern uint32_t syssat_to_gnsssat(const uint32_t sys, const uint32_t sat_id);
+
+/*
+ *@brief        convert time to day of year
+ *@author       quote from RTKLIB
+ *@param[in]    time
+ *@retval       day of year
+ */
+extern fp64 time2doy(fp64 time);

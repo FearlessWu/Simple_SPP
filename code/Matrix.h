@@ -50,5 +50,9 @@ extern RETURN_STATUS matrix_add(matrix_t *mat_in_1, matrix_t *mat_in_2, matrix_t
 
 extern RETURN_STATUS matrix_miu(matrix_t *mat_in_1, matrix_t *mat_in_2, matrix_t *mat_out);
 
+extern RETURN_STATUS matrix_extend_one_col(matrix_t *mat);
+
+extern RETURN_STATUS matrix_copy(const matrix_t *mat_in, matrix_t *mat_out);
+
 extern void matrix_print(matrix_t matrix);
 

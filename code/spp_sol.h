@@ -13,7 +13,10 @@
 */
 #pragma once
 #include "lib.h"
-
+#define POS_PARAM_NUM       (3)
+#define VEL_PARAM_NUM       (3)
+#define DTR_PARAM_NUM       (1)
+#define ESTIMATE_PARAM_NUM(_est_num) {_est_num = POS_PARAM_NUM + VEL_PARAM_NUM + 2 * DTR_PARAM_NUM;}
 /* observation of a single satellite */
 typedef struct
 {

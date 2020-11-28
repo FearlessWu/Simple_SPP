@@ -311,9 +311,13 @@ static fp64 mops_tropo_delay(fp64 lat, fp64 h, fp64 ele, int32_t doy)
     result = ((d_dry + d_wet) * M / SpeedOfLight);
 
     if (isnan(result) || isinf(result) || fabs(result) > 1000.)
+    {
         return 0;
+    }    
     else
+    {
         return result;
+    }
 }
 
 static void earth_rotate_corr(sat_info_t* sat_info, uint32_t sv_id, uint32_t sys_id, rcv_info_t* rcv_info)
@@ -433,7 +437,7 @@ RETURN_STATUS get_sv_pos_clk(obs_epoch_t *obs_c, eph_t *eph, sat_info_t *sat_inf
             sat_info->gps_sat[obs_c->obs[i].sv_id - 1].satpos[j] = sat_pos[j];
         }
         sat_info->gps_sat[obs_c->obs[i].sv_id - 1].satclk[0] = sat_clk;
-        sat_info->gps_sat[obs_c->obs[i].sv_id - 1].pos_var = var;
+        sat_info->gps_sat[obs_c->obs[i].sv_id - 1].pos_var   = var;
 
         /* calculate satellite velocity and clock drift */
         time_s  = time_c - 1E-3;
@@ -462,7 +466,7 @@ static void init_sat_info(sat_info_t *sat_info)
     }
 }
 
-static int32_t pre_residual_deterct(obs_epoch_t *obs, sat_info_t *sat_info)
+static int32_t pre_residual_deterct(obs_sv_t *obs, sat_info_t *sat_info)
 {
     int32_t obs_num = 0;
 
@@ -488,6 +492,7 @@ static void get_rs_clk(const uint32_t sys_id, const uint32_t sv_id, fp64 *rs, fp
         break;
     }
 }
+
 static int32_t Construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, const spp_sol_t *spp_sol, matrix_t *H, 
                                       matrix_t *R, matrix_t *v, uint8_t spp_init)
 {
@@ -497,6 +502,13 @@ static int32_t Construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, 
     fp64    xyz[3]  = { 0 };
     fp64    e[3]    = { 0 };
     fp64    r       = 0;
+    int32_t est_num;
+    matrix_t* R_tmp;
+
+    ESTIMATE_PARAM_NUM(est_num);
+    matrix_init(H, 1, est_num);
+    matrix_init(v, 1, 1);
+    matrix_init(R_tmp, 1, 1);
 
     if (!spp_init)
     {
@@ -507,23 +519,38 @@ static int32_t Construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, 
         for (i = 0; i < 3; ++i) xyz[i] = spp_sol->pos[i];
     }
 
-    obs_num = obs_c->sv_num;
+    xyz2blh(blh, xyz);
+
+    obs_num = 0;
  
     for (i = 0; i < obs_c->sv_num; ++i)
     {
+
         fp64 azel[2]    = { 0 };
         fp64 rs[3]      = { 0 };
         fp64 sat_clk[2] = { 0 };
-        uint32_t gnss_id;
-        obs_sv_t *obs = &obs_c->obs[i];
-        gnss_id = syssat_to_gnsssat(obs->sys_id, obs->sv_id);
+        fp64 iono_value = 0;
+        fp64 trop_value = 0;
+        fp64 e[3]       = { 0 };
+        fp64 r          = 0;
+        obs_sv_t *obs   = &obs_c->obs[i];
+
         get_rs_clk(obs->sys_id, obs->sv_id, rs, sat_clk, sat_info);
+        earth_rotate_corr(sat_info, obs->sv_id, obs->sys_id, &obs_c->rcv_info);
+        r = geodist(rs, xyz, e);
+        satazel(blh, e, obs->azel);
+        iono_value = broadcast_iono_delay(obs_c->time, blh, obs, sat_info);
+        trop_value = mops_tropo_delay(blh[0], blh[2], obs->azel[1], (int32_t)time2doy(obs_c->time));
         
-        if (spp_init)
-        {
-            pre_residual_deterct(obs, sat_info);
-        }
     }
+
+    matrix_init(R, R_tmp->col, R_tmp->col);
+    for (int32_t i = 0; i < R->col; ++i)
+    {
+        R->element[i][i] = R_tmp->element[1][i];
+    }
+    matrix_free(R_tmp);
+
     return 0;
 }
 
@@ -544,7 +571,7 @@ static RETURN_STATUS spp_proc(obs_epoch_t *obs_c, sat_info_t *sat_info, spp_sol_
 
     for (iter_num = 0; iter_num < 20; ++iter_num)
     {
-        Construct_H_R_V_matrix(obs_c, sat_info, &H, &R, &v, &spp_sol, spp_init);
+        Construct_H_R_V_matrix(obs_c, sat_info, spp_sol, &H, &R, &v, spp_init);
         LSQ(&H, &R, &v, &dx, &P);
         //if (norm(dx, 3) < 1e-4)
         //{

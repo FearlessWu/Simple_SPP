@@ -161,3 +161,15 @@ uint32_t syssat_to_gnsssat(const uint32_t sys, const uint32_t sat_id)
 
     return gnss_id;
 }
+
+fp64 time2doy(fp64 time)
+{
+    fp64 ep[6] = { 0 };
+    time2epoch(time, ep);
+    ep[1] = 1.0;
+    ep[2] = 1.0; 
+    ep[3] = 0.0;
+    ep[4] = 0.0;
+    ep[5] = 0.0;
+    return ((time - epoch2time(ep)) / 86400.0 + 1.0);
+}
