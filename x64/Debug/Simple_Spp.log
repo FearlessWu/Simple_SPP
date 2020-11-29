@@ -1,7 +1,7 @@
-﻿  io.c
+﻿  Matrix.c
+  io.c
   lib.c
   main.c
-  process.c
   spp_sol.c
   正在生成代码...
-  Simple_Spp.vcxproj -> C:\Users\凶悍无比的伍xx\Desktop\转正PPT\Simple_SPP\Simple_Spp\x64\Debug\Simple_Spp.exe
+  Simple_Spp.vcxproj -> C:\Users\凶悍无比的伍xx\Desktop\Simple_SPP\x64\Debug\Simple_Spp.exe

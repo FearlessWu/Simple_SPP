@@ -141,6 +141,7 @@
   <ItemGroup>
     <ClInclude Include="code\common.h" />
     <ClInclude Include="code\io.h" />
+    <ClInclude Include="code\lib.h" />
     <ClInclude Include="code\Matrix.h" />
     <ClInclude Include="code\spp_sol.h" />
   </ItemGroup>

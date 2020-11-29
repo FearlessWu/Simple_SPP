@@ -2,8 +2,8 @@
 #include "spp_sol.h"
 #include "io.h"
 #define BROADCAST_EPH_THRESHOLD    (7200)                //unit: sec
-#define GPS_GM                     (3.986004418E14)    // earth-gravitational constant reference to RTKLIB
-
+#define GPS_GM                     (3.986004418E14)      // earth-gravitational constant reference to RTKLIB
+#define ERR_BRDCI                  (0.5)                 /* broadcast iono model error factor */
 
 /* global variable */
 FILE        *obs_fp_ptr;
@@ -503,12 +503,15 @@ static int32_t Construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, 
     fp64    e[3]    = { 0 };
     fp64    r       = 0;
     int32_t est_num;
-    matrix_t* R_tmp;
+
+    matrix_t R_tmp;
+
 
     ESTIMATE_PARAM_NUM(est_num);
     matrix_init(H, 1, est_num);
     matrix_init(v, 1, 1);
-    matrix_init(R_tmp, 1, 1);
+    matrix_init(&R_tmp, 1, 1);
+
 
     if (!spp_init)
     {
@@ -530,26 +533,37 @@ static int32_t Construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, 
         fp64 rs[3]      = { 0 };
         fp64 sat_clk[2] = { 0 };
         fp64 iono_value = 0;
+        fp64 iono_var   = 0;
         fp64 trop_value = 0;
         fp64 e[3]       = { 0 };
         fp64 r          = 0;
         obs_sv_t *obs   = &obs_c->obs[i];
+        uint32_t j;
 
         get_rs_clk(obs->sys_id, obs->sv_id, rs, sat_clk, sat_info);
         earth_rotate_corr(sat_info, obs->sv_id, obs->sys_id, &obs_c->rcv_info);
         r = geodist(rs, xyz, e);
         satazel(blh, e, obs->azel);
         iono_value = broadcast_iono_delay(obs_c->time, blh, obs, sat_info);
+        iono_var   = SQR(iono_var * ERR_BRDCI);
         trop_value = mops_tropo_delay(blh[0], blh[2], obs->azel[1], (int32_t)time2doy(obs_c->time));
+        for (j = 0; j < est_num; ++j)
+        {
+            if (j < POS_PARAM_NUM)
+            {
+                H->element[obs_num][j] = -e[j];
+                continue;
+            }
+        }
         
     }
 
-    matrix_init(R, R_tmp->col, R_tmp->col);
-    for (int32_t i = 0; i < R->col; ++i)
+    matrix_init(R, R_tmp.col, R_tmp.col);
+    for (i = 0; i < R->col; ++i)
     {
-        R->element[i][i] = R_tmp->element[1][i];
+        R->element[i][i] = R_tmp.element[1][i];
     }
-    matrix_free(R_tmp);
+    matrix_free(&R_tmp);
 
     return 0;
 }

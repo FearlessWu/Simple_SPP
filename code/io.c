@@ -54,6 +54,7 @@ static RETURN_STATUS read_opt_body(opt_file_t *opt_file, FILE *fp)
 
     return RET_SUCCESS;
 }
+
 RETURN_STATUS read_opt_file(opt_file_t  *opt_file, char *opt_path)
 {
     FILE *opt_fp;
@@ -91,6 +92,7 @@ RETURN_STATUS read_default_opt_file(opt_file_t *opt_file)
 
     return RET_SUCCESS;
 }
+
 void open_log_file()
 {
     if (!(loger.log_fp = fopen("..//Simple_SPP//log.txt","w")))
@@ -138,7 +140,6 @@ void print_log(fp64 *time, error_code_t err_code, const char *message)
     }
 
 }
-
 
 RETURN_STATUS read_option_file(opt_file_t *opt_file, int32_t args, char *opt_file_path)
 {
@@ -535,6 +536,7 @@ static RETURN_STATUS read_rinex_obs_header(char* obs_file_path, rcv_info_t* rcv_
 
     return RET_FAIL;
 }
+
 static void find_obs_type_idx(int32_t *gps_type_idx, char **gps_type, obs_epoch_t *obs)
 {
     int32_t i;
@@ -562,6 +564,7 @@ static void find_obs_type_idx(int32_t *gps_type_idx, char **gps_type, obs_epoch_
         }
     }
 }
+
 static RETURN_STATUS read_rinex_obs_body(obs_epoch_t *obs, uint8_t *is_run)
 {
     char    buff[1024];
@@ -569,7 +572,7 @@ static RETURN_STATUS read_rinex_obs_body(obs_epoch_t *obs, uint8_t *is_run)
     int32_t buff_size = 1024;
     int32_t i;
     int32_t sv_num;
-    char    *gps_type[2] = { "C1C\0","C2S\0" };
+    char    *gps_type[2]    = { "C1C\0","C2S\0" };
     int32_t gps_type_idx[2] = { 0 };
 
     find_obs_type_idx(gps_type_idx, gps_type, obs);
@@ -693,6 +696,7 @@ static RETURN_STATUS read_rinex_obs_body(obs_epoch_t *obs, uint8_t *is_run)
     *is_run = false;
     return RET_FAIL;
 }
+
 RETURN_STATUS load_curr_rinex_obs(char *obs_file_path, obs_epoch_t *obs, uint8_t *is_open_obs_file, uint8_t *is_run)
 {
     if (!read_rinex_obs_header(obs_file_path, &obs->rcv_info, is_open_obs_file))

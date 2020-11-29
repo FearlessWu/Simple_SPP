@@ -15,6 +15,7 @@
 #include <string.h>
 #include <math.h>
 
+#define SQR(x) ((x) * (x))
 /* redefine data type to adapt other platform */
 typedef signed char         int8_t;
 typedef unsigned char       uint8_t;

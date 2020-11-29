@@ -27,6 +27,9 @@
     <ClInclude Include="code\Matrix.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="code\lib.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="code\io.c">
