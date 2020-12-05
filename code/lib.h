@@ -9,7 +9,9 @@
   * V1.0.0       Nov-07-2020     Wyatt Wu        1. build this file and some foundational content.
   ***************************************(C) COPYRIGHT 2020 Wyatt Wu***********************************
 */
-#pragma once
+#ifndef _LIB_H_
+#define _LIB_H_
+
 #include "Matrix.h"
 
 #define OMGE            (7.2921151467E-5)       /* earth angular velocity (IS-GPS) (rad/s)*/
@@ -146,3 +148,5 @@ extern uint32_t syssat_to_gnsssat(const uint32_t sys, const uint32_t sat_id);
  *@retval       day of year
  */
 extern fp64 time2doy(fp64 time);
+
+#endif

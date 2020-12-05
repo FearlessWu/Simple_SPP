@@ -9,6 +9,9 @@
   * V1.0.1       Nov-18-2020     Wyatt Wu        1. move content to lib.c/h
   ***************************************(C) COPYRIGHT 2020 Wyatt Wu***********************************
 */
+#ifndef _COMMMON_H_
+#define _COMMMON_H_
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -36,3 +39,4 @@ typedef enum
     RET_SUCCESS = 1,
 } ret_status_t;
 
+#endif

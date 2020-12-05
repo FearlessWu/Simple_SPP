@@ -9,8 +9,9 @@
   * V1.0.0       Oct-25-2020     Wyatt Wu/PQiu        1. establih this file
   ************************************(C) COPYRIGHT 2020 Wyatt Wu/PQiu***********************************
   */
+#ifndef _IO_H_
+#define _IO_H
 
-#pragma once
 #include "spp_sol.h"
 
 extern RETURN_STATUS read_opt_file(opt_file_t *opt_file, char *opt_path);
@@ -36,3 +37,5 @@ extern RETURN_STATUS load_curr_rinex_obs(char *obs_file_path, obs_epoch_t *obs, 
   * @retval
  */
 extern void print_log(fp64* time, error_code_t err_code, const char* message);
+
+#endif

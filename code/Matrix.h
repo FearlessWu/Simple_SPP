@@ -12,6 +12,8 @@
   * V1.0.0       Nov-29-2020        Wyatt Wu             1. establih this file
   ************************************************************************************************
 */
+#ifndef _MATRIX_H_
+#define _MATRIX_H_
 
 #include "common.h"
 
@@ -147,4 +149,4 @@ extern RETURN_STATUS matrix_copy(const matrix_t *mat_in, matrix_t *mat_out);
  *@retval           none
  **/
 extern void matrix_print(matrix_t matrix);
-
+#endif

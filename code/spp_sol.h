@@ -11,7 +11,9 @@
   * V1.0.0       Oct-25-2020     PQiu            1. build the struct of eph.
   ***************************************(C) COPYRIGHT 2020 Wyatt Wu***********************************               
 */
-#pragma once
+#ifndef _SPP_SOL_H_
+#define _SPP_SOL_H_
+
 #include "lib.h"
 #define POS_PARAM_NUM                   (3)
 #define VEL_PARAM_NUM                   (3)
@@ -210,3 +212,4 @@ extern FILE      *obs_fp_ptr;
 extern RETURN_STATUS proc(opt_file_t* opt_file);
 
 extern RETURN_STATUS LSQ(matrix_t *H, matrix_t *R, matrix_t *v, matrix_t  *dx, matrix_t *P);
+#endif
