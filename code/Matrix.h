@@ -126,13 +126,12 @@ extern RETURN_STATUS matrix_add(matrix_t *mat_in_1, matrix_t *mat_in_2, matrix_t
 extern RETURN_STATUS matrix_miu(matrix_t *mat_in_1, matrix_t *mat_in_2, matrix_t *mat_out);
 
 /*
- *@brief            extend one colum of matrix, and original elements still store in matrix. the new colum elements are set to 0.
+ *@brief            extend n colums of matrix, and original elements still store in matrix. the new colums elements are set to 0.
  *@author           wyatt.wu
  *@note:            mat_out(row, col) --->   mat_out(row, col + 1)
  *@retval           RET_FAIL: fail, RET_SUCCESS: sucesss
  **/
-extern RETURN_STATUS matrix_extend_one_col(matrix_t *mat);
-
+extern RETURN_STATUS matrix_extend_col(matrix_t *mat, uint32_t n);
 /*
  *@brief            matrix copy  operation
  *@author           wyatt.wu

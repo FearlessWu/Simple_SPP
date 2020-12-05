@@ -397,19 +397,19 @@ static fp64 broadcast_iono_delay(fp64 time, fp64 *blh, obs_sv_t *obs, sat_info_t
     tt -= floor(tt / 86400.0) * 86400.0; /* 0<=tt<86400 */
     
     /* slant factor */
-    f = 1.0 + 16.0 * pow(0.53 - azel[1] / PI, 3.0);
+f = 1.0 + 16.0 * pow(0.53 - azel[1] / PI, 3.0);
 
-    /* ionospheric delay */
-    amp = klbr_iono_param->alph[0] + fi * (klbr_iono_param->alph[1] + fi * (klbr_iono_param->alph[2] + fi * klbr_iono_param->alph[3]));
-    per = klbr_iono_param->beta[0] + fi * (klbr_iono_param->beta[1] + fi * (klbr_iono_param->beta[2] + fi * klbr_iono_param->beta[3]));
-    amp = amp < 0.0 ? 0.0 : amp;
-    per = per < 72000.0 ? 72000.0 : per;
-    x = 2.0 * PI * (tt - 50400.0) / per;
+/* ionospheric delay */
+amp = klbr_iono_param->alph[0] + fi * (klbr_iono_param->alph[1] + fi * (klbr_iono_param->alph[2] + fi * klbr_iono_param->alph[3]));
+per = klbr_iono_param->beta[0] + fi * (klbr_iono_param->beta[1] + fi * (klbr_iono_param->beta[2] + fi * klbr_iono_param->beta[3]));
+amp = amp < 0.0 ? 0.0 : amp;
+per = per < 72000.0 ? 72000.0 : per;
+x = 2.0 * PI * (tt - 50400.0) / per;
 
-    return CLIGHT * f * (fabs(x) < 1.57 ? 5E-9 + amp * (1.0 + x * x * (-0.5 + x * x / 24.0)) : 5E-9);
+return CLIGHT * f * (fabs(x) < 1.57 ? 5E-9 + amp * (1.0 + x * x * (-0.5 + x * x / 24.0)) : 5E-9);
 }
 
-RETURN_STATUS get_sv_pos_clk(obs_epoch_t *obs_c, eph_t *eph, sat_info_t *sat_info)
+RETURN_STATUS get_sv_pos_clk(obs_epoch_t* obs_c, eph_t* eph, sat_info_t* sat_info)
 {
     int32_t i = 0;
     for (i = 0; i < obs_c->sv_num; ++i)
@@ -428,19 +428,19 @@ RETURN_STATUS get_sv_pos_clk(obs_epoch_t *obs_c, eph_t *eph, sat_info_t *sat_inf
             // TODO: do something
             return false;
         }
-        
+
         sat_clk = get_sv_clk_broadcast_eph(obs_c, &eph_sat, sat_info);
-        time_c  = obs_c->time - obs_c->obs[i].P[0] / CLIGHT;
+        time_c = obs_c->time - obs_c->obs[i].P[0] / CLIGHT;
         get_sat_pos_broadcast_eph(&eph_sat, sat_pos, &sat_clk, time_c, &var);
         for (int32_t j = 0; j < 3; ++j)
         {
             sat_info->gps_sat[obs_c->obs[i].sv_id - 1].satpos[j] = sat_pos[j];
         }
         sat_info->gps_sat[obs_c->obs[i].sv_id - 1].satclk[0] = sat_clk;
-        sat_info->gps_sat[obs_c->obs[i].sv_id - 1].pos_var   = var;
+        sat_info->gps_sat[obs_c->obs[i].sv_id - 1].pos_var = var;
 
         /* calculate satellite velocity and clock drift */
-        time_s  = time_c - 1E-3;
+        time_s = time_c - 1E-3;
         sat_clk = get_sv_clk_broadcast_eph(obs_c, &eph_sat, sat_info);
         get_sat_pos_broadcast_eph(&eph_sat, sat_pos, &sat_clk, time_s, &var_s);
         for (int32_t j = 0; j < 3; ++j)
@@ -448,32 +448,32 @@ RETURN_STATUS get_sv_pos_clk(obs_epoch_t *obs_c, eph_t *eph, sat_info_t *sat_inf
             sat_info->gps_sat[obs_c->obs[i].sv_id - 1].satvel[j] = (sat_info->gps_sat[obs_c->obs[i].sv_id - 1].satpos[j] - sat_pos[j]) / 1E-3;
         }
         sat_info->gps_sat[obs_c->obs[i].sv_id - 1].satclk[1] = (sat_info->gps_sat[obs_c->obs[i].sv_id - 1].satclk[0] - sat_clk) / 1E-3;
-        sat_info->gps_sat[obs_c->obs[i].sv_id - 1].is_vaild  = true;
+        sat_info->gps_sat[obs_c->obs[i].sv_id - 1].is_vaild = true;
     }
-    
+
     return RET_SUCCESS;
 }
 
-static void init_sat_info(sat_info_t *sat_info)
+static void init_sat_info(sat_info_t* sat_info)
 {
     int32_t i;
     memset(sat_info, 0, sizeof(sat_info_t));
     for (i = 0; i < MAXGPSNUM; ++i)
     {
-        sat_info->gps_sat[i].sys_id   = SYS_GPS;
-        sat_info->gps_sat[i].sv_id    = i + 1;
+        sat_info->gps_sat[i].sys_id = SYS_GPS;
+        sat_info->gps_sat[i].sv_id = i + 1;
         sat_info->gps_sat[i].is_vaild = false;
     }
 }
 
-static int32_t pre_residual_deterct(obs_sv_t *obs, sat_info_t *sat_info)
+static int32_t pre_residual_deterct(obs_sv_t* obs, sat_info_t* sat_info)
 {
     int32_t obs_num = 0;
 
     return obs_num;
 }
 
-static void get_rs_clk(const uint32_t sys_id, const uint32_t sv_id, fp64 *rs, fp64 *sat_clk, const sat_info_t *sat_info)
+static void get_rs_clk(const uint32_t sys_id, const uint32_t sv_id, fp64* rs, fp64* sv, fp64* sat_clk, const sat_info_t* sat_info)
 {
     uint32_t i;
     switch (sys_id)
@@ -482,6 +482,7 @@ static void get_rs_clk(const uint32_t sys_id, const uint32_t sv_id, fp64 *rs, fp
         for (i = 0; i < 3; ++i)
         {
             rs[i] = sat_info->gps_sat[sv_id - 1].satpos[i];
+            sv[i] = sat_info->gps_sat[sv_id - 1].satvel[i];
             if (i < 2)
             {
                 sat_clk[i] = sat_info->gps_sat[sv_id - 1].satclk[i];
@@ -493,24 +494,36 @@ static void get_rs_clk(const uint32_t sys_id, const uint32_t sv_id, fp64 *rs, fp
     }
 }
 
+static fp64 get_psdrnge_var(fp64 el, int32_t sys)
+{
+    fp64  var = VERY_BIG_NUM;
+    if (sys & SYS_GPS)
+    {
+        var = SQR(100) * (SQR(0.003) + SQR(0.003) / sin(el));
+    }
+    return var;
+}
+
 static int32_t Construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, const spp_sol_t *spp_sol, matrix_t *H, 
                                       matrix_t *R, matrix_t *v, uint8_t spp_init)
 {
     int32_t i;
-    int32_t obs_num = 0;
+    int32_t sv_num = 0;
     fp64    blh[3]  = { 0 };
     fp64    xyz[3]  = { 0 };
     fp64    e[3]    = { 0 };
     fp64    r       = 0;
+    fp64    dtr     = 0;
+    fp64    lam     = 0;
     int32_t est_num;
 
     matrix_t R_tmp;
 
 
     ESTIMATE_PARAM_NUM(est_num);
-    matrix_init(H, 1, est_num);
-    matrix_init(v, 1, 1);
-    matrix_init(&R_tmp, 1, 1);
+    matrix_init(H, 2, est_num);
+    matrix_init(v, 2, 1);
+    matrix_init(&R_tmp, 2, 1);
 
 
     if (!spp_init)
@@ -524,42 +537,76 @@ static int32_t Construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, 
 
     xyz2blh(blh, xyz);
 
-    obs_num = 0;
+    sv_num = 0;
  
     for (i = 0; i < obs_c->sv_num; ++i)
     {
 
         fp64 azel[2]    = { 0 };
         fp64 rs[3]      = { 0 };
+        fp64 vs[3]      = { 0 };
         fp64 sat_clk[2] = { 0 };
         fp64 iono_value = 0;
         fp64 iono_var   = 0;
         fp64 trop_value = 0;
+        fp64 trop_var   = 0;
         fp64 e[3]       = { 0 };
         fp64 r          = 0;
         obs_sv_t *obs   = &obs_c->obs[i];
         uint32_t j;
 
-        get_rs_clk(obs->sys_id, obs->sv_id, rs, sat_clk, sat_info);
+        get_rs_clk(obs->sys_id, obs->sv_id, rs, vs, sat_clk, sat_info);
         earth_rotate_corr(sat_info, obs->sv_id, obs->sys_id, &obs_c->rcv_info);
         r = geodist(rs, xyz, e);
         satazel(blh, e, obs->azel);
         iono_value = broadcast_iono_delay(obs_c->time, blh, obs, sat_info);
         iono_var   = SQR(iono_var * ERR_BRDCI);
         trop_value = mops_tropo_delay(blh[0], blh[2], obs->azel[1], (int32_t)time2doy(obs_c->time));
+
+        if (sv_num != 0)
+        {
+            matrix_extend_col(H, 2);
+            matrix_extend_col(R, 2);
+            matrix_extend_col(v, 2);
+        }
+
         for (j = 0; j < est_num; ++j)
         {
             if (j < POS_PARAM_NUM)
             {
-                H->element[obs_num][j] = -e[j];
+                H->element[sv_num * 2][j] = -e[j]; // for position param
                 continue;
             }
+            else if ((j >= POS_PARAM_NUM) && (j < (POS_PARAM_NUM + VEL_PARAM_NUM)))
+            {
+                H->element[sv_num * 2 + 1][j] = -e[j - POS_PARAM_NUM]; // for velosity param
+                continue;
+            }
+            else if (j >= (POS_PARAM_NUM + VEL_PARAM_NUM) && (j < (POS_PARAM_NUM + VEL_PARAM_NUM + DTR_PARAM_NUM)))
+            {
+                H->element[sv_num * 2][j] = 1; // for clock bias
+            }
+            else
+            {
+                H->element[sv_num * 2 + 1][j] = 1; // for clock drift bias
+            }
         }
-        
+
+        // for psudorange
+        v->element[sv_num * 2][0]    = obs->P[0] - (r + spp_sol->dtr[0] - CLIGHT * sat_clk[0]+ iono_value + trop_value); 
+        R_tmp.element[sv_num * 2][0] = sat_info->gps_sat[obs->sv_id - 1].pos_var + iono_var + trop_var + get_psdrnge_var(azel[1], obs->sys_id);
+
+        /* for doppler */
+        fp64 sv[3] = { 0 };
+        for (uint32_t k = 0; k < 3; k++) sv[k] = vs[k] - spp_sol->vel[k];
+        fp64 range_rate = dot(sv, e, 3) + OMGE / CLIGHT * (vs[2] * xyz[0] + rs[1] * spp_sol->vel[0] - vs[0] * xyz[1] - rs[0] * spp_sol->vel[1]);
+        v->element[sv_num * 2 + 1][0]    = obs->D[0] * lam - (range_rate + spp_sol->dft[0] - CLIGHT * sat_clk[1]);
+        R_tmp.element[sv_num * 2 + 1][0] = SQR(0.5);
+        sv_num++;
     }
 
     matrix_init(R, R_tmp.col, R_tmp.col);
-    for (i = 0; i < R->col; ++i)
+    for (uint32_t i = 0; i < R->col; ++i)
     {
         R->element[i][i] = R_tmp.element[1][i];
     }
@@ -570,7 +617,31 @@ static int32_t Construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, 
 
 RETURN_STATUS LSQ(matrix_t *H, matrix_t *R, matrix_t *v, matrix_t  *dx, matrix_t *P)
 {
-    return RET_SUCCESS;
+    matrix_t HT;
+    matrix_t HTR;
+    matrix_t HTRH;
+    matrix_t HTRv;
+    
+    matrix_init(&HT,   H->col,  H->row);
+    matrix_init(&HTR,  HT.row,  R->col);
+    matrix_init(&HTRH, HTR.row, H->col);
+    matrix_init(&HTRv, HTR.row, v->row);
+
+    matrix_trs(H,    &HT);
+    matrix_mlt(&HT,  R, &HTR);
+    matrix_mlt(&HTR, H, &HTRH);
+    matrix_mlt(&HTR, v, &HTRv);
+
+    if (matrix_inv(&HTRH, P))
+    {
+        matrix_mlt(P, &HTRv, dx);
+
+        return RET_SUCCESS;
+    }
+    else
+    {
+        return RET_FAIL;
+    }
 }
 
 static RETURN_STATUS spp_proc(obs_epoch_t *obs_c, sat_info_t *sat_info, spp_sol_t *spp_sol)

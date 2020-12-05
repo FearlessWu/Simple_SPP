@@ -12,15 +12,15 @@
 #pragma once
 #include "Matrix.h"
 
-#define OMGE        (7.2921151467E-5)       /* earth angular velocity (IS-GPS) (rad/s)*/
-#define FE_WGS84    (1.0/298.257223563)     /* earth flattening (WGS84) */
-#define RE_WGS84    (6378137.0)             /* earth semimajor axis (WGS84) (m)*/
-#define PI          (3.1415926535897932)    /* pi */
-#define CLIGHT      (299792458.0)           /* light speed */
-#define MAXSYS          (4)                 // number of system
-#define FREQ_NUM        (2)                 // number of frequency
-#define MAXOBS          (256)               // the maximum observation number
-#define MAXBROEPH       (30)                // the maximun number of epoch of broadcast ephemeris
+#define OMGE            (7.2921151467E-5)       /* earth angular velocity (IS-GPS) (rad/s)*/
+#define FE_WGS84        (1.0/298.257223563)     /* earth flattening (WGS84) */
+#define RE_WGS84        (6378137.0)             /* earth semimajor axis (WGS84) (m)*/
+#define PI              (3.1415926535897932)    /* pi */
+#define CLIGHT          (299792458.0)           /* light speed */
+#define MAXSYS          (4)                     // number of system
+#define FREQ_NUM        (2)                     // number of frequency
+#define MAXOBS          (256)                   // the maximum observation number
+#define MAXBROEPH       (30)                    // the maximun number of epoch of broadcast ephemeris
 
 #define MAXGPSNUM       (32)
 #define MAXGLONUM       (27)

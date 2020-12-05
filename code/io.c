@@ -116,14 +116,6 @@ void close_log_file()
     }
 }
 
-/**
-  * @brief      record error type and its cause to log file
-  * @author     Wyatt wu
-  * @param[in]  *time    :  error happens time
-  * @param[in]  err_code :  error code. According to error code, we can report the error cause to user.
-  * @param[in]  *message :  char type message to tell error infomation
-  * @retval
- */
 void print_log(fp64 *time, error_code_t err_code, const char *message)
 {
     if (!loger.is_open)

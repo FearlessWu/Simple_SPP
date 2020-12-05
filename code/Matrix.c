@@ -423,7 +423,7 @@ RETURN_STATUS matrix_inv(matrix_t *mat_in, matrix_t *mat_out)
 
     trans_matrix_to_rtklib_mat(mat_in, temp);
 
-    if (!matinv(temp, mat_in->row))
+    if (matinv(temp, mat_in->row))
     {
         // TODO: print32_t log
         return RET_FAIL;
@@ -484,9 +484,9 @@ RETURN_STATUS matrix_copy(const matrix_t *mat_in, matrix_t *mat_out)
     return RET_SUCCESS;
 }
 
-RETURN_STATUS matrix_extend_one_col(matrix_t *mat)
+RETURN_STATUS matrix_extend_col(matrix_t *mat, uint32_t n)
 {
-    if (mat->col <= 0 || mat->row <= 0 || !mat->is_valid)
+    if (mat->col <= 0 || mat->row <= 0 || !mat->is_valid || n <= 0)
     {
         // TODO: report error
         return RET_FAIL;
@@ -499,7 +499,7 @@ RETURN_STATUS matrix_extend_one_col(matrix_t *mat)
         return RET_FAIL;
     }
     matrix_copy(mat, &tmp);
-    if (!matrix_resize(mat, mat->row, (mat->col + 1)))
+    if (!matrix_resize(mat, mat->row, (mat->col + n)))
     {
         // TODO: report error
         return RET_FAIL;

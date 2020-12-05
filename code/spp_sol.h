@@ -16,7 +16,8 @@
 #define POS_PARAM_NUM                   (3)
 #define VEL_PARAM_NUM                   (3)
 #define DTR_PARAM_NUM                   (1)
-#define ESTIMATE_PARAM_NUM(_est_num)    {_est_num = POS_PARAM_NUM + VEL_PARAM_NUM + 2 * DTR_PARAM_NUM;}
+#define DFT_PARAM_NUM                   (1)
+#define ESTIMATE_PARAM_NUM(_est_num)    {_est_num = POS_PARAM_NUM + VEL_PARAM_NUM + DTR_PARAM_NUM + DFT_PARAM_NUM;}
 
 /* observation of a single satellite */
 typedef struct
@@ -31,7 +32,8 @@ typedef struct
     int32_t     D_status[FREQ_NUM]; /*!< the status of doppler. It can show whether doppler can use or not */
     fp64        CN0[FREQ_NUM];      /*!< signal strength */
     fp64        azel[2];
-    int32_t     LLI[FREQ_NUM]; 
+    int32_t     LLI[FREQ_NUM];
+    fp64        lam[FREQ_NUM];      /*!< wavelength of frequencies, uint: m */
 } obs_sv_t;
 
 
@@ -105,10 +107,10 @@ typedef struct
 {
     uint32_t    sys_id;
     uint32_t    sv_id;
-    fp64        satpos[3];
-    fp64        satvel[3];
-    fp64        satclk[2];
-    fp64        el;
+    fp64        satpos[3]; // uint: m
+    fp64        satvel[3]; // uint: m/s
+    fp64        satclk[2]; // uint: second
+    fp64        el;        // uint: rad
     fp64        transtime;
     fp64        pos_var;
     uint8_t     is_vaild;
@@ -145,7 +147,8 @@ typedef struct
 {
     fp64  pos[3];       // ecef
     fp64  vel[3];       
-    fp64  dt[2];
+    fp64  dtr[DTR_PARAM_NUM];
+    fp64  dft[DFT_PARAM_NUM];
     fp64  pos_neu[3];
     fp64  vel_neu[3];
     fp64  blh[3];
