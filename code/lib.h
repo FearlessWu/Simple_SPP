@@ -61,43 +61,42 @@ extern void time2epoch(fp64 time, fp64 *ep);
   * @brief         convert time to week and tow in gps time
   * @author        quote from RTKLIB, modified by Wyatt wu
   * @param[in]     t    : gps time in 1970
-  * @param[in/out] week : week number in gps time (NULL: no output)
+  * @param[inout]  week : week number in gps time (NULL: no output)
   * @retval        time of week in gps time (s)
  */
 extern fp64 time2gpst(fp64 t, int32_t *week);
 
-/* 
+/**
  * @brief        inner product of vectors
- * @auther       quote from RTKLIB
+ * @author       quote from RTKLIB
  * @param[in]    a:vector a (n x 1)
  * @param[in]    b:vector b (n x 1)
  * @param[in]    n: size of vector a,b
  * @retval       a'*b
- *-----------------------------------------------------------------------------
 */
 extern fp64 dot(const fp64 *a, const fp64 *b, int32_t n);
 
-/*
+/**
  *@brief        euclid norm of vector
- *@auther       quote from RTKLIB
+ *@author       quote from RTKLIB
  *@param[in]    a : vector a (n x 1)
  *@param[in]    n : size of vector a
  *@retval       || a ||
  **/
 extern fp64 norm(const fp64* a, int32_t n);
 
-/*
+/**
  *@brief        transform ecef to geodetic postion
- *@auther       quote from RTKLIB
+ *@author       quote from RTKLIB
  *@param[in]    xyz: ecef position {x,y,z} (m)
  *@param[out]   blh: geodetic position {lat,lon,h} (rad,m)
  *@retval       none
  **/
 extern void xyz2blh(const fp64 *xyz, fp64 *blh);
 
-/*
+/**
  *@brief        eometric distance and receiver-to-satellite unit vector
- *@auther       quote from RTKLIB
+ *@author       quote from RTKLIB
  *@param[in]    rs: satellilte position (ecef at transmission) (m)
  *@param[in]    rr: receiver position (ecef at reception) (m)
  *@param[out]   e : line-of-sight vector (ecef)
@@ -106,16 +105,16 @@ extern void xyz2blh(const fp64 *xyz, fp64 *blh);
  **/
 extern fp64 geodist(const fp64* rs, const fp64* rr, fp64* e);
 
-/*
+/**
  *@brief        compute ecef to local coordinate transfromation matrix
- *@auther       quote from RTKLIB
+ *@author       quote from RTKLIB
  *@param[in]    blh: geodetic position {lat,lon} (rad)
  *@param[out]   E  : ecef to local coord transformation matrix (3x3)
  *@retval       none
  **/
 extern void xyz2enu(const fp64 *blh, fp64 *E);
 
-/*
+/**
  *@brief        transform ecef vector to local tangental coordinate
  *@author       quote from RTKLIB
  *@param[in]    blh: geodetic position {lat,lon} (rad)
@@ -125,9 +124,9 @@ extern void xyz2enu(const fp64 *blh, fp64 *E);
  * */
 extern void ecef2enu(const fp64 *blh, const fp64 *r, fp64 *e);
 
-/*
+/**
  *@brief        compute satellite azimuth/elevation angle
- *@auther       quote from RTKLIB
+ *@author       quote from RTKLIB
  *@param[in]    blh : geodetic position {lat,lon,h} (rad,m)
  *@param[in]    e   : receiver-to-satellilte unit vevtor (ecef)
  *@param[out]   azel: azimuth/elevation {az,el} (rad) (NULL: no output)
@@ -135,16 +134,16 @@ extern void ecef2enu(const fp64 *blh, const fp64 *r, fp64 *e);
  **/
 extern fp64 satazel(const fp64 *blh, const fp64 *e, fp64 *azel);
 
-/*
+/**
  *@brief        convert sat id in single sysem to sat id in gnss system
- *@auther       wyatt.wu
+ *@author       wyatt.wu
  *@param[in]    sys    : system
  *@param[in]    sat_id : sat id in system
  *@retval       sat id in gnss system
  **/
 extern uint32_t syssat_to_gnsssat(const uint32_t sys, const uint32_t sat_id);
 
-/*
+/**
  *@brief        convert time to day of year
  *@author       quote from RTKLIB
  *@param[in]    time

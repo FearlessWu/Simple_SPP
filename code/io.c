@@ -30,10 +30,10 @@ extern const char *error_message[];
    "C2M", "L2M", "D2M", "S2M",        "L2N", "D2N", "S2N"
  };
 
- static const char* L5_signal_type[] =
+ static const char *L5_signal_type[GPS_L5_SIGNAL_NUM] =
  {
-     "C5I", "L5I", "D5I", "S5I", "C5Q", "L5Q", "D5Q", "S5Q",
-     "C5X", "L5X", "D5X", "S5X"
+    "C5I", "L5I", "D5I", "S5I", "C5Q", "L5Q", "D5Q", "S5Q",
+    "C5X", "L5X", "D5X", "S5X"
  };
 
 /* remove the newline symbol */

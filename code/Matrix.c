@@ -572,7 +572,7 @@ void matrix_print(matrix_t matrix)
     }
 }
 
-void matrix_log(matrix_t matrix, log_t* loger, char *message)
+void matrix_log(matrix_t matrix, log_t *loger, char *message)
 {
     uint32_t i;
     uint32_t j;

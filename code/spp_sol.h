@@ -164,7 +164,6 @@ typedef struct
     char    nav_file[256];
     char    freq_type[2][4];
     uint8_t freq_num;
-    
 } opt_file_t;
 
 
@@ -200,10 +199,10 @@ extern log_t      loger;
 extern opt_file_t opt_file;
 extern FILE      *obs_fp_ptr;
 
-/*
+/**
  *@brief        the main process root function
  *@author       wyatt.wu
- *@param[in]    option file path
+ *@param[in]    option_file option file content
  *@retval       RET_FALI/RET_SUCCESS
  **/
 extern RETURN_STATUS proc(opt_file_t* opt_file);
