@@ -1,2 +1,4 @@
 obs_file_path       = ..\Simple_SPP\data\MATE00ITA_R_20202220000_01D_30S_MO.20o
 nav_file_path       = ..\Simple_SPP\data\BRDC00IGS_R_20202220000_01D_MN.rnx
+freq_num            = 2
+freq_type           = C1C C2S

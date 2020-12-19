@@ -499,7 +499,7 @@ static fp64 get_psdrnge_var(fp64 el, int32_t sys)
     fp64  var = VERY_BIG_NUM;
     if (sys & SYS_GPS)
     {
-        var = SQR(100) * (SQR(0.003) + SQR(0.003) / sin(el));
+        var = SQR(100.0) * (SQR(0.003) + SQR(0.003) / sin(el));
     }
     return var;
 }
@@ -553,7 +553,7 @@ static int32_t Construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, 
         fp64 e[3]       = { 0 };
         fp64 r          = 0;
         obs_sv_t *obs   = &obs_c->obs[i];
-        uint32_t j;
+        int32_t j;
 
         get_rs_clk(obs->sys_id, obs->sv_id, rs, vs, sat_clk, sat_info);
         earth_rotate_corr(sat_info, obs->sv_id, obs->sys_id, &obs_c->rcv_info);
@@ -686,7 +686,7 @@ RETURN_STATUS proc(opt_file_t *opt_file)
         init_sat_info(&sat_info);
 
         /* read rinex obs file */
-        load_curr_rinex_obs(opt_file->obs_file, &obs_c, &is_open_obs_file, &is_run);
+        load_curr_rinex_obs(opt_file, &obs_c, &is_open_obs_file, &is_run);
         if (is_fist_run)
         {
             /* read rinex nav file*/

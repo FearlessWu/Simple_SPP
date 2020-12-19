@@ -20,7 +20,7 @@
 #define PI              (3.1415926535897932)    /* pi */
 #define CLIGHT          (299792458.0)           /* light speed */
 #define MAXSYS          (4)                     // number of system
-#define FREQ_NUM        (2)                     // number of frequency
+#define FREQ_NUM        (2)                     // number of max frequency
 #define MAXOBS          (256)                   // the maximum observation number
 #define MAXBROEPH       (30)                    // the maximun number of epoch of broadcast ephemeris
 
@@ -37,6 +37,8 @@
 #define VERY_BIG_NUM    (99999999.0)
 #define VERY_SMALL_NUM  (-99999999.0)
 
+#define FREQ1           1.57542E9           /* L1/E1  frequency (Hz) */
+#define FREQ2           1.22760E9           /* L2     frequency (Hz) */
 /**
   * @brief      convert calendar day/time to time
   * @author     quote from RTKLIB, modified by Wyatt wu

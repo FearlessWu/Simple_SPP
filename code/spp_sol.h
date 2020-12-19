@@ -160,8 +160,11 @@ typedef struct
 
 typedef struct
 {
-    char obs_file[256];
-    char nav_file[256];
+    char    obs_file[256];
+    char    nav_file[256];
+    char    freq_type[2][4];
+    uint8_t freq_num;
+    
 } opt_file_t;
 
 

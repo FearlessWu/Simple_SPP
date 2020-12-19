@@ -2,12 +2,39 @@
 #include "io.h"
 #include "spp_sol.h"
 
+#define GPS_L1_SIGNAL_NUM   (35)
+#define GPS_L2_SIGNAL_NUM   (39)
+#define GPS_L5_SIGNAL_NUM   (12)
 
 /* global variable */
 extern log_t loger;
 extern FILE* obs_fp_ptr;
 extern FILE* nav_fp_ptr;
 extern const char *error_message[];
+
+ static const char *L1_signal_type[GPS_L1_SIGNAL_NUM] =
+ {
+   "C1C", "L1C", "D1C", "S1C", "C1S", "L1S", "D1S", "S1S",
+   "C1L", "L1L", "D1L", "S1L", "C1X", "L1X", "D1X", "S1X",
+   "C1P", "L1P", "D1P", "S1P", "C1W", "L1W", "D1W", "S1W",
+   "C1Y", "L1Y", "D1Y", "S1Y", "C1M", "L1M", "D1M", "S1M",
+          "L1N", "D1N", "S1N"
+ };
+ 
+ static const char *L2_signal_type[GPS_L2_SIGNAL_NUM] = 
+ {
+   "C2C", "L2C", "D2C", "S2C", "C2D", "L2D", "D2D", "S2D",
+   "C2S", "L2S", "D2S", "S2S", "C2L", "L2L", "D2L", "S2L", 
+   "C2X", "L2X", "D2X", "S2X", "C2P", "L2P", "D2P", "S2P",
+   "C2W", "L2W", "D2W", "S2W", "C2Y", "L2Y", "D2Y", "S2Y",
+   "C2M", "L2M", "D2M", "S2M",        "L2N", "D2N", "S2N"
+ };
+
+ static const char* L5_signal_type[] =
+ {
+     "C5I", "L5I", "D5I", "S5I", "C5Q", "L5Q", "D5Q", "S5Q",
+     "C5X", "L5X", "D5X", "S5X"
+ };
 
 /* remove the newline symbol */
 static void remove_newline_symbol(char* in)
@@ -35,6 +62,8 @@ static RETURN_STATUS add_stop_char(char *in, int32_t pos)
 static RETURN_STATUS read_opt_body(opt_file_t *opt_file, FILE *fp)
 {
     char buff[1024];
+    char sub_buff[512];
+
     const int32_t buff_size = 1024;
 
     while ((fgets(buff, buff_size, fp)) != NULL)
@@ -50,6 +79,23 @@ static RETURN_STATUS read_opt_body(opt_file_t *opt_file, FILE *fp)
             strncpy(opt_file->nav_file, buff + 22, 255);
             remove_newline_symbol(opt_file->nav_file);
         }
+
+        if (strstr(buff, "freq_num") != NULL)
+        {
+            strncpy(sub_buff, buff + 22, 255);
+            add_stop_char(sub_buff, 1);
+            opt_file->freq_num = atoi(sub_buff);
+        }
+
+        if (strstr(buff, "freq_type") != NULL)
+        {
+            for (int32_t i = 0; i < opt_file->freq_num; ++i)
+            {
+                strncpy(opt_file->freq_type[i], buff + 22 + i * 4, 3);
+                remove_newline_symbol(opt_file->freq_type[i]);
+            }
+        }
+
     }
 
     return RET_SUCCESS;
@@ -529,7 +575,7 @@ static RETURN_STATUS read_rinex_obs_header(char* obs_file_path, rcv_info_t* rcv_
     return RET_FAIL;
 }
 
-static void find_obs_type_idx(int32_t *gps_type_idx, char **gps_type, obs_epoch_t *obs)
+static void find_obs_type_idx(int32_t *gps_type_idx, char **gps_type, obs_epoch_t *obs, uint8_t freq_num)
 {
     int32_t i;
     int32_t count = 0;
@@ -539,7 +585,7 @@ static void find_obs_type_idx(int32_t *gps_type_idx, char **gps_type, obs_epoch_
         {
             gps_type_idx[0] = i + 1;
             count++;
-            if (count == 2)
+            if (count == freq_num)
             {
                 return;
             }
@@ -549,7 +595,7 @@ static void find_obs_type_idx(int32_t *gps_type_idx, char **gps_type, obs_epoch_
         {
             gps_type_idx[1] = i + 1;
             count++;
-            if (count == 2)
+            if (count == freq_num)
             {
                 return;
             }
@@ -557,17 +603,43 @@ static void find_obs_type_idx(int32_t *gps_type_idx, char **gps_type, obs_epoch_
     }
 }
 
-static RETURN_STATUS read_rinex_obs_body(obs_epoch_t *obs, uint8_t *is_run)
+static void get_lam(char **signal_type, fp64 *lam, uint8_t freq_num)
+{
+    for (uint8_t j = 0; j < freq_num; ++j)
+    {
+        for (uint8_t i = 0; i < GPS_L1_SIGNAL_NUM; ++i)
+        {
+            if (!(strcmp(signal_type[j], L1_signal_type[i])))
+            {
+                lam[j] = FREQ1;
+
+                break;
+            }
+
+            if (!(strcmp(signal_type[j], L2_signal_type[i])))
+            {
+                lam[j] = FREQ2;
+                
+                break;
+            }
+        }
+    }
+    
+}
+
+static RETURN_STATUS read_rinex_obs_body(opt_file_t *opt_file, obs_epoch_t *obs, uint8_t *is_run)
 {
     char    buff[1024];
     char    sub_buff[1024];
     int32_t buff_size = 1024;
     int32_t i;
     int32_t sv_num;
-    char    *gps_type[2]    = { "C1C\0","C2S\0" };
+    fp64    lam[2] = {0.0};
+    char    *gps_type[2]    = { opt_file->freq_type[1], opt_file->freq_type[0] };
     int32_t gps_type_idx[2] = { 0 };
 
-    find_obs_type_idx(gps_type_idx, gps_type, obs);
+    find_obs_type_idx(gps_type_idx, gps_type, obs, opt_file->freq_num);
+    get_lam(gps_type, lam, opt_file->freq_num);
 
     while (fgets(buff, buff_size, obs_fp_ptr))
     {
@@ -624,7 +696,7 @@ static RETURN_STATUS read_rinex_obs_body(obs_epoch_t *obs, uint8_t *is_run)
                 obs->obs[obs->sv_num].sv_id = atoi(sub_buff);
 
                 int32_t j;
-                for (j = 0; j < 2; ++j)
+                for (j = 0; j < opt_file->freq_num; ++j)
                 {
                     /* pseudorange */
                     int32_t k = 3 + (gps_type_idx[j] - 1) * 16;
@@ -678,6 +750,9 @@ static RETURN_STATUS read_rinex_obs_body(obs_epoch_t *obs, uint8_t *is_run)
                     strncpy(sub_buff, buff + k, 14);
                     add_stop_char(sub_buff, 14);
                     obs->obs[obs->sv_num].CN0[j] = atof(sub_buff);
+
+                    /* set wave length */
+                    obs->obs[obs->sv_num].lam[j] = lam[j];
                 }
             }
             obs->sv_num++;
@@ -689,15 +764,15 @@ static RETURN_STATUS read_rinex_obs_body(obs_epoch_t *obs, uint8_t *is_run)
     return RET_FAIL;
 }
 
-RETURN_STATUS load_curr_rinex_obs(char *obs_file_path, obs_epoch_t *obs, uint8_t *is_open_obs_file, uint8_t *is_run)
+RETURN_STATUS load_curr_rinex_obs(opt_file_t *opt_file, obs_epoch_t *obs, uint8_t *is_open_obs_file, uint8_t *is_run)
 {
-    if (!read_rinex_obs_header(obs_file_path, &obs->rcv_info, is_open_obs_file))
+    if (!read_rinex_obs_header(opt_file->obs_file, &obs->rcv_info, is_open_obs_file))
     {
         // TODO: do something
         return RET_FAIL;
     }
     
-    if (!read_rinex_obs_body(obs, is_run))
+    if (!read_rinex_obs_body(opt_file, obs, is_run))
     {
         // TODO: do something
         return RET_FAIL;

@@ -10,7 +10,7 @@
   ************************************(C) COPYRIGHT 2020 Wyatt Wu/PQiu***********************************
   */
 #ifndef _IO_H_
-#define _IO_H
+#define _IO_H_
 
 #include "spp_sol.h"
 
@@ -26,16 +26,16 @@ extern RETURN_STATUS read_option_file(opt_file_t *opt_file, int32_t args, char *
 
 extern RETURN_STATUS read_rinex_nav_data(char *nav_file_path, sys_ion_cor_t *all_ion_cor, eph_t *all_eph_info, uint8_t *is_open_nav_file);
 
-extern RETURN_STATUS load_curr_rinex_obs(char *obs_file_path, obs_epoch_t *obs, uint8_t *is_open_obs_file, uint8_t *is_run);
+extern RETURN_STATUS load_curr_rinex_obs(opt_file_t *opt_file, obs_epoch_t *obs, uint8_t *is_open_obs_file, uint8_t *is_run);
 
 /**
   * @brief      record error type and its cause to log file
   * @author     Wyatt wu
-  * @param[in]  *time    :  error happens time
+  * @param[in]  time     :  error happens time
   * @param[in]  err_code :  error code. According to error code, we can report the error cause to user.
-  * @param[in]  *message :  char type message to tell error infomation
+  * @param[in]  message  :  char type message to tell error infomation
   * @retval
  */
-extern void print_log(fp64* time, error_code_t err_code, const char* message);
+extern void print_log(fp64 *time, error_code_t err_code, const char *message);
 
 #endif
