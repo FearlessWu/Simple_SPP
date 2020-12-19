@@ -195,12 +195,6 @@ typedef enum
 } error_level_t;
 
 
-typedef struct
-{
-    bool_t  is_open;
-    FILE   *log_fp;
-} log_t;
-
 /* global variable */
 extern log_t      loger;
 extern opt_file_t opt_file;

@@ -130,10 +130,19 @@ extern RETURN_STATUS matrix_miu(matrix_t *mat_in_1, matrix_t *mat_in_2, matrix_t
 /*
  *@brief            extend n colums of matrix, and original elements still store in matrix. the new colums elements are set to 0.
  *@author           wyatt.wu
- *@note:            mat_out(row, col) --->   mat_out(row, col + 1)
+ *@note:            mat_out(row, col) --->   mat_out(row, col + n)
  *@retval           RET_FAIL: fail, RET_SUCCESS: sucesss
  **/
 extern RETURN_STATUS matrix_extend_col(matrix_t *mat, uint32_t n);
+
+/*
+ *@brief            extend n row of matrix, and original elements still store in matrix. the new rows elements are set to 0.
+ *@author           wyatt.wu
+ *@note:            mat_out(row, col) --->   mat_out(row + n, col)
+ *@retval           RET_FAIL: fail, RET_SUCCESS: sucesss
+ **/
+extern RETURN_STATUS matrix_extend_row(matrix_t *mat, uint32_t n);
+
 /*
  *@brief            matrix copy  operation
  *@author           wyatt.wu
@@ -149,4 +158,13 @@ extern RETURN_STATUS matrix_copy(const matrix_t *mat_in, matrix_t *mat_out);
  *@retval           none
  **/
 extern void matrix_print(matrix_t matrix);
+
+/*
+ *@brief            print matrix to log file according to its row and col,
+ *@author           wyatt.wu
+ *@note:
+ *@retval           none
+ **/
+extern void matrix_log(matrix_t matrix, log_t *loger, char *message);
+
 #endif

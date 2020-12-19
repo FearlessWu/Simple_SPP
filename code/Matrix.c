@@ -493,13 +493,47 @@ RETURN_STATUS matrix_extend_col(matrix_t *mat, uint32_t n)
     }
 
     matrix_t tmp;
-    if (!matrix_init(&tmp, mat->row, mat->row))
+    if (!matrix_init(&tmp, mat->row, mat->col))
     {
         // TODO: report error
         return RET_FAIL;
     }
     matrix_copy(mat, &tmp);
     if (!matrix_resize(mat, mat->row, (mat->col + n)))
+    {
+        // TODO: report error
+        return RET_FAIL;
+    }
+
+    uint32_t i, j;
+    for (i = 0; i < tmp.row; ++i)
+    {
+        for (j = 0; j < tmp.col; ++j)
+        {
+            mat->element[i][j] = tmp.element[i][j];
+        }
+    }
+    matrix_free(&tmp);
+
+    return RET_SUCCESS;
+}
+
+RETURN_STATUS matrix_extend_row(matrix_t *mat, uint32_t n)
+{
+    if (mat->col <= 0 || mat->row <= 0 || !mat->is_valid || n <= 0)
+    {
+        // TODO: report error
+        return RET_FAIL;
+    }
+
+    matrix_t tmp;
+    if (!matrix_init(&tmp, mat->row, mat->col))
+    {
+        // TODO: report error
+        return RET_FAIL;
+    }
+    matrix_copy(mat, &tmp);
+    if (!matrix_resize(mat, (mat->row + n), mat->col))
     {
         // TODO: report error
         return RET_FAIL;
@@ -536,4 +570,32 @@ void matrix_print(matrix_t matrix)
             }
         }
     }
+}
+
+void matrix_log(matrix_t matrix, log_t* loger, char *message)
+{
+    uint32_t i;
+    uint32_t j;
+
+    if (!loger->is_open)
+    {
+        return;
+    }
+    fprintf(loger->log_fp, "%s\n", message);
+    for (i = 0; i < matrix.row; ++i)
+    {
+        for (j = 0; j < matrix.col; ++j)
+        {
+            if (j == matrix.col - 1)
+            {
+                fprintf(loger->log_fp, "%8.3f\n", matrix.element[i][j]);
+            }
+            else
+            {
+                fprintf(loger->log_fp, "%8.3f", matrix.element[i][j]);
+            }
+        }
+    }
+
+    fflush(loger->log_fp);
 }

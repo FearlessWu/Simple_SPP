@@ -39,4 +39,11 @@ typedef enum
     RET_SUCCESS = 1,
 } ret_status_t;
 
+typedef struct
+{
+    bool_t  is_open;
+    FILE* log_fp;
+} log_t;
+
+
 #endif

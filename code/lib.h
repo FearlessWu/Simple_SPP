@@ -39,6 +39,7 @@
 
 #define FREQ1           1.57542E9           /* L1/E1  frequency (Hz) */
 #define FREQ2           1.22760E9           /* L2     frequency (Hz) */
+
 /**
   * @brief      convert calendar day/time to time
   * @author     quote from RTKLIB, modified by Wyatt wu

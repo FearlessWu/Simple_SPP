@@ -563,11 +563,11 @@ static int32_t Construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, 
         iono_var   = SQR(iono_var * ERR_BRDCI);
         trop_value = mops_tropo_delay(blh[0], blh[2], obs->azel[1], (int32_t)time2doy(obs_c->time));
 
-        if (sv_num != 0)
+          if (sv_num != 0)
         {
-            matrix_extend_col(H, 2);
-            matrix_extend_col(R, 2);
-            matrix_extend_col(v, 2);
+            matrix_extend_row(H, 2);
+            matrix_extend_row(&R_tmp, 2);
+            matrix_extend_row(v, 2);
         }
 
         for (j = 0; j < est_num; ++j)
@@ -594,7 +594,8 @@ static int32_t Construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, 
 
         // for psudorange
         v->element[sv_num * 2][0]    = obs->P[0] - (r + spp_sol->dtr[0] - CLIGHT * sat_clk[0]+ iono_value + trop_value); 
-        R_tmp.element[sv_num * 2][0] = sat_info->gps_sat[obs->sv_id - 1].pos_var + iono_var + trop_var + get_psdrnge_var(azel[1], obs->sys_id);
+        fp64 psdrnge_var = get_psdrnge_var(obs->azel[1], obs->sys_id);
+        R_tmp.element[sv_num * 2][0] = sat_info->gps_sat[obs->sv_id - 1].pos_var + iono_var + trop_var + psdrnge_var;
 
         /* for doppler */
         fp64 sv[3] = { 0 };
@@ -605,7 +606,8 @@ static int32_t Construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, 
         sv_num++;
     }
 
-    matrix_init(R, R_tmp.col, R_tmp.col);
+    matrix_log(R_tmp, &loger, "R_TEM");
+    matrix_init(R, R_tmp.row, R_tmp.row);
     for (uint32_t i = 0; i < R->col; ++i)
     {
         R->element[i][i] = R_tmp.element[1][i];
@@ -653,10 +655,17 @@ static RETURN_STATUS spp_proc(obs_epoch_t *obs_c, sat_info_t *sat_info, spp_sol_
     static uint8_t spp_init     = false;
 
     matrix_t H, R,  v, dx, P;
+    uint32_t est_num;
+    ESTIMATE_PARAM_NUM(est_num);
+    matrix_init(&dx, est_num, 1);
+    matrix_init(&P, est_num, est_num);
 
     for (iter_num = 0; iter_num < 20; ++iter_num)
     {
         Construct_H_R_V_matrix(obs_c, sat_info, spp_sol, &H, &R, &v, spp_init);
+        matrix_log(H, &loger, "H");
+        matrix_log(R, &loger, "R");
+        matrix_log(v, &loger, "V");
         LSQ(&H, &R, &v, &dx, &P);
         //if (norm(dx, 3) < 1e-4)
         //{
