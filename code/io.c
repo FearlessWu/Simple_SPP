@@ -635,7 +635,7 @@ static RETURN_STATUS read_rinex_obs_body(opt_file_t *opt_file, obs_epoch_t *obs,
     int32_t i;
     int32_t sv_num;
     fp64    lam[2] = {0.0};
-    char    *gps_type[2]    = { opt_file->freq_type[1], opt_file->freq_type[0] };
+    char    *gps_type[2]    = { opt_file->freq_type[0], opt_file->freq_type[1] };
     int32_t gps_type_idx[2] = { 0 };
 
     find_obs_type_idx(gps_type_idx, gps_type, obs, opt_file->freq_num);

@@ -473,12 +473,16 @@ static int32_t pre_residual_deterct(obs_sv_t* obs, sat_info_t* sat_info)
     return obs_num;
 }
 
-static void get_rs_clk(const uint32_t sys_id, const uint32_t sv_id, fp64* rs, fp64* sv, fp64* sat_clk, const sat_info_t* sat_info)
+static uint8_t get_rs_clk(const uint32_t sys_id, const uint32_t sv_id, fp64 *rs, fp64 *sv, fp64 *sat_clk, const sat_info_t *sat_info)
 {
     uint32_t i;
     switch (sys_id)
     {
     case SYS_GPS:
+        if (!sat_info->gps_sat[sv_id - 1].is_vaild)
+        {
+            return false;
+        }
         for (i = 0; i < 3; ++i)
         {
             rs[i] = sat_info->gps_sat[sv_id - 1].satpos[i];
@@ -492,6 +496,8 @@ static void get_rs_clk(const uint32_t sys_id, const uint32_t sv_id, fp64* rs, fp
     default:
         break;
     }
+
+    return true;
 }
 
 static fp64 get_psdrnge_var(fp64 el, int32_t sys)
@@ -504,38 +510,39 @@ static fp64 get_psdrnge_var(fp64 el, int32_t sys)
     return var;
 }
 
-static int32_t Construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, const spp_sol_t *spp_sol, matrix_t *H, 
-                                      matrix_t *R, matrix_t *v, uint8_t spp_init)
+static int32_t construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, const spp_sol_t *spp_sol, matrix_t *H, 
+                                      matrix_t *R, matrix_t *v, uint8_t spp_init, const fp64 *appro_param)
 {
     int32_t i;
     int32_t sv_num = 0;
-    fp64    blh[3]  = { 0 };
-    fp64    xyz[3]  = { 0 };
-    fp64    e[3]    = { 0 };
-    fp64    r       = 0;
-    fp64    dtr     = 0;
-    fp64    lam     = 0;
     int32_t est_num;
 
+    fp64 r      = 0;
+    fp64 lam    = 0;
+    fp64 dtr    = 0;
+    fp64 dft    = 0;
+    fp64 e[3]   = { 0 };
+    fp64 blh[3] = { 0 };
+    fp64 xyz[3] = { 0 };
+    fp64 vel[3] = { 0 };
+    
     matrix_t R_tmp;
-
 
     ESTIMATE_PARAM_NUM(est_num);
     matrix_init(H, 2, est_num);
     matrix_init(v, 2, 1);
     matrix_init(&R_tmp, 2, 1);
 
-
-    if (!spp_init)
+    for (i = 0; i < 3; ++i)
     {
-        for (i = 0; i < 3; ++i) xyz[i] = obs_c->rcv_info.appro_pos[i];
-    }
-    else
-    {
-        for (i = 0; i < 3; ++i) xyz[i] = spp_sol->pos[i];
+        xyz[i] = appro_param[i];
+        vel[i] = appro_param[i + POS_PARAM_NUM + DTR_PARAM_NUM];
     }
 
-    xyz2blh(blh, xyz);
+    dtr = appro_param[3];
+    dft = appro_param[7];
+
+    xyz2blh(xyz, blh);
 
     sv_num = 0;
  
@@ -555,7 +562,10 @@ static int32_t Construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, 
         obs_sv_t *obs   = &obs_c->obs[i];
         int32_t j;
 
-        get_rs_clk(obs->sys_id, obs->sv_id, rs, vs, sat_clk, sat_info);
+        if(!get_rs_clk(obs->sys_id, obs->sv_id, rs, vs, sat_clk, sat_info))
+        {
+            continue;
+        }
         earth_rotate_corr(sat_info, obs->sv_id, obs->sys_id, &obs_c->rcv_info);
         r = geodist(rs, xyz, e);
         satazel(blh, e, obs->azel);
@@ -563,7 +573,7 @@ static int32_t Construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, 
         iono_var   = SQR(iono_var * ERR_BRDCI);
         trop_value = mops_tropo_delay(blh[0], blh[2], obs->azel[1], (int32_t)time2doy(obs_c->time));
 
-          if (sv_num != 0)
+        if (sv_num != 0)
         {
             matrix_extend_row(H, 2);
             matrix_extend_row(&R_tmp, 2);
@@ -593,15 +603,15 @@ static int32_t Construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, 
         }
 
         // for psudorange
-        v->element[sv_num * 2][0]    = obs->P[0] - (r + spp_sol->dtr[0] - CLIGHT * sat_clk[0]+ iono_value + trop_value); 
+        v->element[sv_num * 2][0]    = obs->P[0] - (r + dtr - CLIGHT * sat_clk[0]+ iono_value + trop_value); 
         fp64 psdrnge_var = get_psdrnge_var(obs->azel[1], obs->sys_id);
         R_tmp.element[sv_num * 2][0] = sat_info->gps_sat[obs->sv_id - 1].pos_var + iono_var + trop_var + psdrnge_var;
 
         /* for doppler */
         fp64 sv[3] = { 0 };
-        for (uint32_t k = 0; k < 3; k++) sv[k] = vs[k] - spp_sol->vel[k];
-        fp64 range_rate = dot(sv, e, 3) + OMGE / CLIGHT * (vs[2] * xyz[0] + rs[1] * spp_sol->vel[0] - vs[0] * xyz[1] - rs[0] * spp_sol->vel[1]);
-        v->element[sv_num * 2 + 1][0]    = obs->D[0] * lam - (range_rate + spp_sol->dft[0] - CLIGHT * sat_clk[1]);
+        for (uint32_t k = 0; k < 3; k++) sv[k] = vs[k] - vel[k];
+        fp64 range_rate = dot(sv, e, 3) + OMGE / CLIGHT * (vs[2] * xyz[0] + rs[1] * vel[0] - vs[0] * xyz[1] - rs[0] * vel[1]);
+        v->element[sv_num * 2 + 1][0]    = obs->D[0] * lam - (range_rate + dft - CLIGHT * sat_clk[1]);
         R_tmp.element[sv_num * 2 + 1][0] = SQR(0.5);
         sv_num++;
     }
@@ -610,11 +620,11 @@ static int32_t Construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, 
     matrix_init(R, R_tmp.row, R_tmp.row);
     for (uint32_t i = 0; i < R->col; ++i)
     {
-        R->element[i][i] = R_tmp.element[1][i];
+        R->element[i][i] = R_tmp.element[i][0];
     }
     matrix_free(&R_tmp);
 
-    return 0;
+    return sv_num;
 }
 
 RETURN_STATUS LSQ(matrix_t *H, matrix_t *R, matrix_t *v, matrix_t  *dx, matrix_t *P)
@@ -627,12 +637,15 @@ RETURN_STATUS LSQ(matrix_t *H, matrix_t *R, matrix_t *v, matrix_t  *dx, matrix_t
     matrix_init(&HT,   H->col,  H->row);
     matrix_init(&HTR,  HT.row,  R->col);
     matrix_init(&HTRH, HTR.row, H->col);
-    matrix_init(&HTRv, HTR.row, v->row);
+    matrix_init(&HTRv, HTR.row, v->col);
 
     matrix_trs(H,    &HT);
     matrix_mlt(&HT,  R, &HTR);
     matrix_mlt(&HTR, H, &HTRH);
     matrix_mlt(&HTR, v, &HTRv);
+    
+    matrix_log(HTR, &loger, "HTR");
+    matrix_log(HTRv, &loger, "HTRv");
 
     if (matrix_inv(&HTRH, P))
     {
@@ -651,7 +664,7 @@ static RETURN_STATUS spp_proc(obs_epoch_t *obs_c, sat_info_t *sat_info, spp_sol_
     int32_t i                   = 0;
     int32_t iter_num            = 0;
     int32_t act_obs_num         = 0;
-    int32_t obs_num             = 0;
+    int32_t sv_num              = 0;
     static uint8_t spp_init     = false;
 
     matrix_t H, R,  v, dx, P;
@@ -660,13 +673,50 @@ static RETURN_STATUS spp_proc(obs_epoch_t *obs_c, sat_info_t *sat_info, spp_sol_
     matrix_init(&dx, est_num, 1);
     matrix_init(&P, est_num, est_num);
 
+    fp64 *appro_param = (fp64*)malloc(sizeof(fp64) * est_num);
+    memset(appro_param, 0, sizeof(fp64) * est_num);
+
+    if (!spp_init)
+    {
+        for (i = 0; i < 3; ++i)
+        {
+            appro_param[i] = obs_c->rcv_info.appro_pos[i];
+            appro_param[i + POS_PARAM_NUM + DTR_PARAM_NUM] = 0;
+        }
+    }
+    else
+    {
+        for (i = 0; i < 3; ++i)
+        {
+            appro_param[i] = spp_sol->pos[i];
+            appro_param[i + POS_PARAM_NUM + DTR_PARAM_NUM] = spp_sol->vel[i];
+        }
+    }
+
+
     for (iter_num = 0; iter_num < 20; ++iter_num)
     {
-        Construct_H_R_V_matrix(obs_c, sat_info, spp_sol, &H, &R, &v, spp_init);
+        sv_num = construct_H_R_V_matrix(obs_c, sat_info, spp_sol, &H, &R, &v, spp_init, appro_param);
+
         matrix_log(H, &loger, "H");
         matrix_log(R, &loger, "R");
         matrix_log(v, &loger, "V");
-        LSQ(&H, &R, &v, &dx, &P);
+        
+        if (sv_num > 4)
+        {
+            if (LSQ(&H, &R, &v, &dx, &P))
+            {
+                for (uint32_t k = 0; k < est_num; ++k)
+                {
+                    appro_param[k] += dx.element[k][0];
+                }
+            }
+        }
+        
+        if (fabs(dx.element[0][0]) < 0.1)
+        {
+            break;
+        }
         //if (norm(dx, 3) < 1e-4)
         //{
         //    // TODO: ouput result
