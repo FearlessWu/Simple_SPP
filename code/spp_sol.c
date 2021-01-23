@@ -723,10 +723,41 @@ static RETURN_STATUS spp_proc(obs_epoch_t *obs_c, sat_info_t *sat_info, spp_sol_
         //    break;
         //}
     }
-
+    free(appro_param);
     spp_init = true;
 
     return RET_SUCCESS;
+}
+
+static bool check_start_end_time(const opt_file_t *opt_file, const fp64 *cur_ep)
+{
+    fp64 cur_time;
+    fp64 start_time;
+    fp64 end_time;
+    fp64 start_ep[6];
+    fp64 end_ep[6];
+
+    for (uint8_t i = 0; i < 3; ++i)
+    {
+        start_ep[i]     = cur_ep[i];
+        start_ep[i + 3] = opt_file->start_time[i];
+        end_ep[i]       = cur_ep[i];
+        end_ep[i + 3]   = opt_file->start_time[i];
+    }
+
+    start_time = epoch2time(start_ep);
+    end_time   = epoch2time(end_ep);
+    cur_time   = epoch2time(cur_ep);
+
+    if (cur_time >= start_time && cur_time <= end_time)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+    
 }
 
 RETURN_STATUS proc(opt_file_t *opt_file)
@@ -735,7 +766,7 @@ RETURN_STATUS proc(opt_file_t *opt_file)
     uint8_t       is_open_obs_file = false;    // false: obs file has been opened; true: has not been opened.
     uint8_t       is_open_nav_file = false;
     uint8_t       is_run           = true;
-    uint8_t       is_fist_run      = true;
+    uint8_t       is_first_run     = true;
     spp_sol_t     spp_sol          = {0};
 
     while (is_run)
@@ -746,12 +777,19 @@ RETURN_STATUS proc(opt_file_t *opt_file)
 
         /* read rinex obs file */
         load_curr_rinex_obs(opt_file, &obs_c, &is_open_obs_file, &is_run);
-        if (is_fist_run)
+
+        if (!check_start_end_time(opt_file, obs_c.ep))
         {
-            /* read rinex nav file*/
-            read_rinex_nav_data(opt_file->nav_file, &sat_info.sys_ion_cor, &eph, &is_open_nav_file);
-            is_fist_run = false;
+            continue;
         }
+
+        if (is_first_run)
+        {
+            /* read rinex nav file */
+            read_rinex_nav_data(opt_file->nav_file, &sat_info.sys_ion_cor, &eph, &is_open_nav_file);
+            is_first_run = false;
+        }
+
         get_sv_pos_clk(&obs_c, &eph, &sat_info);
         
         spp_proc(&obs_c, &sat_info, &spp_sol);

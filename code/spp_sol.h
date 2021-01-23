@@ -163,6 +163,8 @@ typedef struct
     char    obs_file[256];
     char    nav_file[256];
     char    freq_type[2][4];
+    fp64    start_time[3]; // hour/min/sec
+    fp64    end_time[3];
     uint8_t freq_num;
 } opt_file_t;
 

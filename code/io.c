@@ -66,6 +66,12 @@ static RETURN_STATUS read_opt_body(opt_file_t *opt_file, FILE *fp)
 
     const int32_t buff_size = 1024;
 
+    for (uint8_t k = 0; k < 3; ++k)
+    {
+        opt_file->start_time[k] = 0;
+        opt_file->end_time[k]   = 0;
+    }
+
     while ((fgets(buff, buff_size, fp)) != NULL)
     {
         if (strstr(buff, "obs_file_path") != NULL)
@@ -89,13 +95,32 @@ static RETURN_STATUS read_opt_body(opt_file_t *opt_file, FILE *fp)
 
         if (strstr(buff, "freq_type") != NULL)
         {
-            for (int32_t i = 0; i < opt_file->freq_num; ++i)
+            for (uint8_t i = 0; i < opt_file->freq_num; ++i)
             {
                 strncpy(opt_file->freq_type[i], buff + 22 + i * 4, 3);
                 remove_newline_symbol(opt_file->freq_type[i]);
             }
         }
 
+        if (strstr(buff, "start_time") != NULL)
+        {
+            for (uint8_t i = 0; i < 3; ++i)
+            {
+                strncpy(sub_buff, buff + 22 + i * 3, 2);
+                add_stop_char(sub_buff, 2);
+                opt_file->start_time[i] = atoi(sub_buff);
+            }
+        }
+
+        if (strstr(buff, "end_time") != NULL)
+        {
+            for (uint8_t i = 0; i < 3; ++i)
+            {
+                strncpy(sub_buff, buff + 22 + i * 3, 2);
+                add_stop_char(sub_buff, 2);
+                opt_file->end_time[i] = atoi(sub_buff);
+            }
+        }
     }
 
     return RET_SUCCESS;
