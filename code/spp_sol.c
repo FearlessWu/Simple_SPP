@@ -603,7 +603,7 @@ static int32_t construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, 
         }
 
         // for psudorange
-        v->element[sv_num * 2][0]    = obs->P[0] - (r + dtr - CLIGHT * sat_clk[0]+ iono_value + trop_value); 
+        v->element[sv_num * 2][0]  = obs->P[0] - (r + dtr - CLIGHT * sat_clk[0]+ iono_value + trop_value); 
         fp64 psdrnge_var = get_psdrnge_var(obs->azel[1], obs->sys_id);
         R_tmp.element[sv_num * 2][0] = sat_info->gps_sat[obs->sv_id - 1].pos_var + iono_var + trop_var + psdrnge_var;
 
@@ -674,7 +674,16 @@ static RETURN_STATUS spp_proc(obs_epoch_t *obs_c, sat_info_t *sat_info, spp_sol_
     matrix_init(&P, est_num, est_num);
 
     fp64 *appro_param = (fp64*)malloc(sizeof(fp64) * est_num);
-    memset(appro_param, 0, sizeof(fp64) * est_num);
+    if (appro_param != NULL)
+    {
+        memset(appro_param, 0, sizeof(fp64) * est_num);
+    }
+    else
+    {
+        return RET_FAIL;
+        // TODO:recore memory error
+    }
+    
 
     if (!spp_init)
     {
@@ -742,7 +751,7 @@ static bool check_start_end_time(const opt_file_t *opt_file, const fp64 *cur_ep)
         start_ep[i]     = cur_ep[i];
         start_ep[i + 3] = opt_file->start_time[i];
         end_ep[i]       = cur_ep[i];
-        end_ep[i + 3]   = opt_file->start_time[i];
+        end_ep[i + 3]   = opt_file->end_time[i];
     }
 
     start_time = epoch2time(start_ep);
@@ -760,6 +769,41 @@ static bool check_start_end_time(const opt_file_t *opt_file, const fp64 *cur_ep)
     
 }
 
+static void output_orbit_clk(const obs_epoch_t *obs_c, const sat_info_t *sat_info)
+{
+    if (loger.is_open)
+    {
+        fprintf(loger.log_fp, "%4d %2d %2d %02d %02d %02d\n",
+                (int32_t)obs_c->ep[0], (int32_t)obs_c->ep[1], (int32_t)obs_c->ep[2],
+                (int32_t)obs_c->ep[3], (int32_t)obs_c->ep[4], (int32_t)obs_c->ep[5]);
+        fflush(loger.log_fp);
+
+        for (uint8_t i = 0; i < obs_c->sv_num; ++i)
+        {
+            uint8_t idx = obs_c->obs[i].sv_id - 1;
+            if (!sat_info->gps_sat[idx].is_vaild)
+            {
+                continue;
+            }
+
+            fprintf(loger.log_fp, "G%02d  %15.4f  %15.4f  %15.4f  ", (idx + 1),
+                    sat_info->gps_sat[idx].satpos[0], sat_info->gps_sat[idx].satpos[1],
+                    sat_info->gps_sat[idx].satpos[2]);
+            fflush(loger.log_fp);
+
+            fprintf(loger.log_fp, "%15.4f  %15.4f  %15.4f  %15.4f\n",
+                    sat_info->gps_sat[idx].satvel[0], sat_info->gps_sat[idx].satvel[1],
+                    sat_info->gps_sat[idx].satvel[2], (sat_info->gps_sat[idx].satclk[0] * CLIGHT));
+
+            fflush(loger.log_fp);
+
+        }
+    }
+    else
+    {
+        fprintf(loger.log_fp, "log file is not open!\n");
+    }
+}
 RETURN_STATUS proc(opt_file_t *opt_file)
 {
     RETURN_STATUS ret_status       = false;
@@ -791,9 +835,11 @@ RETURN_STATUS proc(opt_file_t *opt_file)
         }
 
         get_sv_pos_clk(&obs_c, &eph, &sat_info);
-        
+
+        output_orbit_clk(&obs_c, &sat_info);
+
         spp_proc(&obs_c, &sat_info, &spp_sol);
     }
-    
+   
     return RET_SUCCESS;
 }
