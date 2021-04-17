@@ -165,6 +165,6 @@ extern void matrix_print(matrix_t matrix);
  *@note:
  *@retval           none
  **/
-extern void matrix_log(matrix_t matrix, log_t *loger, char *message);
+extern void matrix_log(matrix_t matrix, file_t *logger, char *message);
 
 #endif

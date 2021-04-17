@@ -20,7 +20,7 @@ extern RETURN_STATUS read_default_opt_file(opt_file_t *opt_file);
 
 extern void open_log_file();
 
-extern void close_log_file();
+extern void close_files();
 
 extern RETURN_STATUS read_option_file(opt_file_t *opt_file, int32_t args, char *opt_file_path);
 

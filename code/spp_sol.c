@@ -6,8 +6,7 @@
 #define ERR_BRDCI                  (0.5)                 /* broadcast iono model error factor */
 
 /* global variable */
-FILE        *obs_fp_ptr;
-extern log_t loger;
+extern files_manager_t files_manager;
 
 /* variable only use in this file */
 obs_epoch_t   obs_c;
@@ -473,7 +472,8 @@ static int32_t pre_residual_deterct(obs_sv_t* obs, sat_info_t* sat_info)
     return obs_num;
 }
 
-static uint8_t get_rs_clk(const uint32_t sys_id, const uint32_t sv_id, fp64 *rs, fp64 *sv, fp64 *sat_clk, const sat_info_t *sat_info)
+static uint8_t get_rs_clk(const uint32_t sys_id, const uint32_t sv_id,                   fp64 *rs,
+                                       fp64 *sv,        fp64 *sat_clk, const sat_info_t *sat_info)
 {
     uint32_t i;
     switch (sys_id)
@@ -510,8 +510,56 @@ static fp64 get_psdrnge_var(fp64 el, int32_t sys)
     return var;
 }
 
-static int32_t construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, const spp_sol_t *spp_sol, matrix_t *H, 
-                                      matrix_t *R, matrix_t *v, uint8_t spp_init, const fp64 *appro_param)
+static void construct_H_matrix(matrix_t     *H,     const spp_sol_t *spp_sol,
+                         const uint8_t sv_num, const uint8_t   grep,
+                         const fp64    *e)
+{
+    uint8_t j = 0;
+    if (spp_sol->sol_type == SOL_TYPE_POS_VEL)
+    {
+         for (j = 0; j < spp_sol->est_num; ++j)
+        {
+            if (j < POS_PARAM_NUM)
+            {
+                H->element[sv_num * grep][j] = -e[j]; // for position param
+                continue;
+            }
+            else if ((j >= POS_PARAM_NUM) && (j < (POS_PARAM_NUM + VEL_PARAM_NUM)))
+            {
+                H->element[sv_num * grep + 1][j] = -e[j - POS_PARAM_NUM]; // for velosity param
+                continue;
+            }
+            else if (j >= (POS_PARAM_NUM + VEL_PARAM_NUM) && (j < (POS_PARAM_NUM + VEL_PARAM_NUM + DTR_PARAM_NUM)))
+            {
+                H->element[sv_num * grep][j] = 1; // for clock bias
+            }
+            else
+            {
+                H->element[sv_num * grep + 1][j] = 1; // for clock drift bias
+            }
+        }
+    }
+    else if (spp_sol->sol_type == SOL_TYPE_POS)
+    {
+        for (j = 0; j < spp_sol->est_num; ++j)
+        {
+            if (j < POS_PARAM_NUM)
+            {
+                H->element[sv_num * grep][j] = -e[j]; /* for position parameters*/
+            }
+            else
+            {
+                H->element[sv_num * grep][j] = 1;     /* for dtr parameters */
+            }
+        }
+    }
+}
+
+static int32_t construct_H_R_V_matrix(obs_epoch_t     *obs_c,   const sat_info_t *sat_info,
+                                      const spp_sol_t *spp_sol, matrix_t   *H,
+                                      matrix_t        *R,       matrix_t   *v,
+                                      uint8_t         spp_init, fp64       *appro_param,
+                                      uint8_t         iter_num)
 {
     int32_t i;
     int32_t sv_num = 0;
@@ -527,20 +575,31 @@ static int32_t construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, 
     fp64 vel[3] = { 0 };
     
     matrix_t R_tmp;
+    uint8_t grep = 1;
+    if (spp_sol->sol_type == SOL_TYPE_POS_VEL)
+    {
+        grep = 2;
+    }
 
-    ESTIMATE_PARAM_NUM(est_num);
-    matrix_init(H, 2, est_num);
-    matrix_init(v, 2, 1);
-    matrix_init(&R_tmp, 2, 1);
+    matrix_init(H,      grep, spp_sol->est_num);
+    matrix_init(v,      grep, 1);
+    matrix_init(&R_tmp, grep, 1);
 
     for (i = 0; i < 3; ++i)
     {
         xyz[i] = appro_param[i];
-        vel[i] = appro_param[i + POS_PARAM_NUM + DTR_PARAM_NUM];
+        if (spp_sol->sol_type == SOL_TYPE_POS_VEL)
+        {
+            vel[i] = appro_param[i + POS_PARAM_NUM + DTR_PARAM_NUM];
+        }
     }
 
     dtr = appro_param[3];
-    dft = appro_param[7];
+
+    if (spp_sol->sol_type == SOL_TYPE_POS_VEL)
+    {
+        dft = appro_param[7];
+    }
 
     xyz2blh(xyz, blh);
 
@@ -560,14 +619,19 @@ static int32_t construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, 
         fp64 e[3]       = { 0 };
         fp64 r          = 0;
         obs_sv_t *obs   = &obs_c->obs[i];
-        int32_t j;
+
+        if (iter_num == 0)
+        {
+            //earth_rotate_corr(sat_info, obs->sv_id, obs->sys_id, &obs_c->rcv_info);
+        }
 
         if(!get_rs_clk(obs->sys_id, obs->sv_id, rs, vs, sat_clk, sat_info))
         {
             continue;
         }
-        earth_rotate_corr(sat_info, obs->sv_id, obs->sys_id, &obs_c->rcv_info);
+
         r = geodist(rs, xyz, e);
+
         satazel(blh, e, obs->azel);
         iono_value = broadcast_iono_delay(obs_c->time, blh, obs, sat_info);
         iono_var   = SQR(iono_var * ERR_BRDCI);
@@ -575,48 +639,38 @@ static int32_t construct_H_R_V_matrix(obs_epoch_t *obs_c, sat_info_t *sat_info, 
 
         if (sv_num != 0)
         {
-            matrix_extend_row(H, 2);
-            matrix_extend_row(&R_tmp, 2);
-            matrix_extend_row(v, 2);
+            matrix_extend_row(H, grep);
+            matrix_extend_row(&R_tmp, grep);
+            matrix_extend_row(v, grep);
         }
 
-        for (j = 0; j < est_num; ++j)
-        {
-            if (j < POS_PARAM_NUM)
-            {
-                H->element[sv_num * 2][j] = -e[j]; // for position param
-                continue;
-            }
-            else if ((j >= POS_PARAM_NUM) && (j < (POS_PARAM_NUM + VEL_PARAM_NUM)))
-            {
-                H->element[sv_num * 2 + 1][j] = -e[j - POS_PARAM_NUM]; // for velosity param
-                continue;
-            }
-            else if (j >= (POS_PARAM_NUM + VEL_PARAM_NUM) && (j < (POS_PARAM_NUM + VEL_PARAM_NUM + DTR_PARAM_NUM)))
-            {
-                H->element[sv_num * 2][j] = 1; // for clock bias
-            }
-            else
-            {
-                H->element[sv_num * 2 + 1][j] = 1; // for clock drift bias
-            }
-        }
-
+        construct_H_matrix(H, spp_sol, sv_num, grep, e);
         // for psudorange
-        v->element[sv_num * 2][0]  = obs->P[0] - (r + dtr - CLIGHT * sat_clk[0]+ iono_value + trop_value); 
-        fp64 psdrnge_var = get_psdrnge_var(obs->azel[1], obs->sys_id);
-        R_tmp.element[sv_num * 2][0] = sat_info->gps_sat[obs->sv_id - 1].pos_var + iono_var + trop_var + psdrnge_var;
+        v->element[sv_num * grep][0]  = obs->P[0] - (r + dtr - CLIGHT * sat_clk[0]+ iono_value + trop_value); 
 
+        fp64 psdrnge_var = get_psdrnge_var(obs->azel[1], obs->sys_id);
+        if (iter_num == 0)
+        {
+            R_tmp.element[sv_num * grep][0] = (sat_info->gps_sat[obs->sv_id - 1].pos_var + iono_var + trop_var + psdrnge_var) / sin(obs->azel[1]);
+        }
+        else
+        {
+            R_tmp.element[sv_num * grep][0] = v->element[sv_num * grep][0] / sin(obs->azel[1]);
+        }
+         R_tmp.element[sv_num * grep][0] = (sat_info->gps_sat[obs->sv_id - 1].pos_var + iono_var + trop_var + psdrnge_var) / sin(obs->azel[1]);
         /* for doppler */
-        fp64 sv[3] = { 0 };
-        for (uint32_t k = 0; k < 3; k++) sv[k] = vs[k] - vel[k];
-        fp64 range_rate = dot(sv, e, 3) + OMGE / CLIGHT * (vs[2] * xyz[0] + rs[1] * vel[0] - vs[0] * xyz[1] - rs[0] * vel[1]);
-        v->element[sv_num * 2 + 1][0]    = obs->D[0] * lam - (range_rate + dft - CLIGHT * sat_clk[1]);
-        R_tmp.element[sv_num * 2 + 1][0] = SQR(0.5);
+        if (spp_sol->sol_type == SOL_TYPE_POS_VEL)
+        {
+            fp64 sv[3] = { 0 };
+            for (uint32_t k = 0; k < 3; k++) sv[k] = vs[k] - vel[k];
+            fp64 range_rate = dot(sv, e, 3) + OMGE / CLIGHT * (vs[2] * xyz[0] + rs[1] * vel[0] - vs[0] * xyz[1] - rs[0] * vel[1]);
+            v->element[sv_num * grep + 1][0]    = obs->D[0] * lam - (range_rate + dft - CLIGHT * sat_clk[1]);
+            R_tmp.element[sv_num * grep + 1][0] = SQR(0.5);
+        }
         sv_num++;
     }
 
-    matrix_log(R_tmp, &loger, "R_TEM");
+    //matrix_log(R_tmp, &files_manager.logger, "R_TEM");
     matrix_init(R, R_tmp.row, R_tmp.row);
     for (uint32_t i = 0; i < R->col; ++i)
     {
@@ -643,13 +697,15 @@ RETURN_STATUS LSQ(matrix_t *H, matrix_t *R, matrix_t *v, matrix_t  *dx, matrix_t
     matrix_mlt(&HT,  R, &HTR);
     matrix_mlt(&HTR, H, &HTRH);
     matrix_mlt(&HTR, v, &HTRv);
-    
-    matrix_log(HTR, &loger, "HTR");
-    matrix_log(HTRv, &loger, "HTRv");
+
+    //matrix_log(HTR, &files_manager.logger, "HTR");
+    //matrix_log(HTRv, &files_manager.logger, "HTRv");
 
     if (matrix_inv(&HTRH, P))
     {
+        //matrix_log(*P,    &files_manager.logger, "P");
         matrix_mlt(P, &HTRv, dx);
+        matrix_log(*dx, &files_manager.logger, "dx");
 
         return RET_SUCCESS;
     }
@@ -659,24 +715,12 @@ RETURN_STATUS LSQ(matrix_t *H, matrix_t *R, matrix_t *v, matrix_t  *dx, matrix_t
     }
 }
 
-static RETURN_STATUS spp_proc(obs_epoch_t *obs_c, sat_info_t *sat_info, spp_sol_t *spp_sol)
+static void appro_param_handle(fp64 *appro_param, uint8_t   spp_init,
+                               fp64 *rnx_rcv_pos, spp_sol_t *spp_sol)
 {
-    int32_t i                   = 0;
-    int32_t iter_num            = 0;
-    int32_t act_obs_num         = 0;
-    int32_t sv_num              = 0;
-    static uint8_t spp_init     = false;
-
-    matrix_t H, R,  v, dx, P;
-    uint32_t est_num;
-    ESTIMATE_PARAM_NUM(est_num);
-    matrix_init(&dx, est_num, 1);
-    matrix_init(&P, est_num, est_num);
-
-    fp64 *appro_param = (fp64*)malloc(sizeof(fp64) * est_num);
     if (appro_param != NULL)
     {
-        memset(appro_param, 0, sizeof(fp64) * est_num);
+        memset(appro_param, 0, sizeof(fp64) * spp_sol->est_num);
     }
     else
     {
@@ -687,42 +731,71 @@ static RETURN_STATUS spp_proc(obs_epoch_t *obs_c, sat_info_t *sat_info, spp_sol_
 
     if (!spp_init)
     {
-        for (i = 0; i < 3; ++i)
+        for (uint8_t i = 0; i < 3; ++i)
         {
-            appro_param[i] = obs_c->rcv_info.appro_pos[i];
-            appro_param[i + POS_PARAM_NUM + DTR_PARAM_NUM] = 0;
+            appro_param[i] = rnx_rcv_pos[i];
+            if (spp_sol->sol_type == SOL_TYPE_POS_VEL)
+            {
+                appro_param[i + POS_PARAM_NUM + DTR_PARAM_NUM] = 0;
+            }
+
         }
     }
     else
     {
-        for (i = 0; i < 3; ++i)
+        for (uint8_t i = 0; i < 3; ++i)
         {
             appro_param[i] = spp_sol->pos[i];
-            appro_param[i + POS_PARAM_NUM + DTR_PARAM_NUM] = spp_sol->vel[i];
+            if (spp_sol->sol_type == SOL_TYPE_POS_VEL)
+            {
+                appro_param[i + POS_PARAM_NUM + DTR_PARAM_NUM] = spp_sol->vel[i];
+            }
         }
     }
+}
 
+static void output_solution_to_file(spp_sol_t *spp_sol, fp64 *time)
+{
+
+}
+
+static RETURN_STATUS spp_proc(obs_epoch_t *obs_c, const sat_info_t *sat_info, spp_sol_t *spp_sol)
+{
+    int32_t iter_num            = 0;
+    int32_t sv_num              = 0;
+    static uint8_t spp_init     = false;
+
+    matrix_t H, R,  v, dx, P;
+
+    matrix_init(&dx, spp_sol->est_num, 1);
+    matrix_init(&P,  spp_sol->est_num, spp_sol->est_num);
+
+    fp64 *appro_param = (fp64*)malloc(sizeof(fp64) * spp_sol->est_num);
+    appro_param_handle(appro_param, spp_init, obs_c->rcv_info.appro_pos, spp_sol);
 
     for (iter_num = 0; iter_num < 20; ++iter_num)
     {
-        sv_num = construct_H_R_V_matrix(obs_c, sat_info, spp_sol, &H, &R, &v, spp_init, appro_param);
+        sv_num = construct_H_R_V_matrix(obs_c, sat_info, spp_sol, &H, &R, &v, spp_init, appro_param, iter_num);
 
-        matrix_log(H, &loger, "H");
-        matrix_log(R, &loger, "R");
-        matrix_log(v, &loger, "V");
-        
+        matrix_log(H, &files_manager.logger, "H");
+        matrix_log(R, &files_manager.logger, "R");
+        matrix_log(v, &files_manager.logger, "V");
+        RETURN_STATUS status = RET_FAIL;
+
         if (sv_num > 4)
         {
-            if (LSQ(&H, &R, &v, &dx, &P))
+            if (status = LSQ(&H, &R, &v, &dx, &P))
             {
-                for (uint32_t k = 0; k < est_num; ++k)
+                fprintf(files_manager.logger.fp, "appro\n");
+                for (uint32_t k = 0; k < spp_sol->est_num; ++k)
                 {
                     appro_param[k] += dx.element[k][0];
+                    fprintf(files_manager.logger.fp, "%f\n", appro_param[k]);
                 }
             }
         }
         
-        if (fabs(dx.element[0][0]) < 0.1)
+        if ((fabs(dx.element[0][0]) < 0.1) && status)
         {
             break;
         }
@@ -771,12 +844,12 @@ static bool check_start_end_time(const opt_file_t *opt_file, const fp64 *cur_ep)
 
 static void output_orbit_clk(const obs_epoch_t *obs_c, const sat_info_t *sat_info)
 {
-    if (loger.is_open)
+    if (files_manager.logger.is_open)
     {
-        fprintf(loger.log_fp, "%4d %2d %2d %02d %02d %02d\n",
+        fprintf(files_manager.logger.fp, "%4d %2d %2d %02d %02d %02d\n",
                 (int32_t)obs_c->ep[0], (int32_t)obs_c->ep[1], (int32_t)obs_c->ep[2],
                 (int32_t)obs_c->ep[3], (int32_t)obs_c->ep[4], (int32_t)obs_c->ep[5]);
-        fflush(loger.log_fp);
+        fflush(files_manager.logger.fp);
 
         for (uint8_t i = 0; i < obs_c->sv_num; ++i)
         {
@@ -786,23 +859,40 @@ static void output_orbit_clk(const obs_epoch_t *obs_c, const sat_info_t *sat_inf
                 continue;
             }
 
-            fprintf(loger.log_fp, "G%02d  %15.4f  %15.4f  %15.4f  ", (idx + 1),
+            fprintf(files_manager.logger.fp, "G%02d  %15.4f  %15.4f  %15.4f  ", (idx + 1),
                     sat_info->gps_sat[idx].satpos[0], sat_info->gps_sat[idx].satpos[1],
                     sat_info->gps_sat[idx].satpos[2]);
-            fflush(loger.log_fp);
+            fflush(files_manager.logger.fp);
 
-            fprintf(loger.log_fp, "%15.4f  %15.4f  %15.4f  %15.4f\n",
+            fprintf(files_manager.logger.fp, "%15.4f  %15.4f  %15.4f  %15.4f\n",
                     sat_info->gps_sat[idx].satvel[0], sat_info->gps_sat[idx].satvel[1],
                     sat_info->gps_sat[idx].satvel[2], (sat_info->gps_sat[idx].satclk[0] * CLIGHT));
 
-            fflush(loger.log_fp);
+            fflush(files_manager.logger.fp);
 
         }
     }
     else
     {
-        fprintf(loger.log_fp, "log file is not open!\n");
+        fprintf(files_manager.logger.fp, "log file is not open!\n");
     }
+}
+
+static void init_spp_sol(spp_sol_t *spp_sol, opt_file_t *opt_file)
+{
+    spp_sol->sol_type = opt_file->vel_sol_enable;
+
+    if (opt_file->vel_sol_enable)
+    {
+        spp_sol->sol_type = SOL_TYPE_POS_VEL;
+        ESTIMATE_PARAM_POS_VEL_NUM(spp_sol->est_num);
+    }
+    else
+    {
+        spp_sol->sol_type = SOL_TYPE_POS;
+        ESTIMATE_PARAM_POS_NUM(spp_sol->est_num);
+    }
+
 }
 RETURN_STATUS proc(opt_file_t *opt_file)
 {
@@ -812,6 +902,8 @@ RETURN_STATUS proc(opt_file_t *opt_file)
     uint8_t       is_run           = true;
     uint8_t       is_first_run     = true;
     spp_sol_t     spp_sol          = {0};
+
+    init_spp_sol(&spp_sol, opt_file);
 
     while (is_run)
     {
@@ -836,7 +928,7 @@ RETURN_STATUS proc(opt_file_t *opt_file)
 
         get_sv_pos_clk(&obs_c, &eph, &sat_info);
 
-        output_orbit_clk(&obs_c, &sat_info);
+        //output_orbit_clk(&obs_c, &sat_info);
 
         spp_proc(&obs_c, &sat_info, &spp_sol);
     }

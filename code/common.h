@@ -42,8 +42,13 @@ typedef enum
 typedef struct
 {
     bool_t  is_open;
-    FILE* log_fp;
-} log_t;
+    FILE    *fp;
+} file_t;
 
+typedef struct
+{
+  file_t logger;
+  file_t out_pos;
+} files_manager_t;
 
 #endif

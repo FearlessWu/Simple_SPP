@@ -572,31 +572,30 @@ void matrix_print(matrix_t matrix)
     }
 }
 
-void matrix_log(matrix_t matrix, log_t *loger, char *message)
+void matrix_log(matrix_t matrix, file_t *logger, char *message)
 {
-    return;
     uint32_t i;
     uint32_t j;
 
-    if (!loger->is_open)
+    if (!logger->is_open)
     {
         return;
     }
-    fprintf(loger->log_fp, "%s\n", message);
+    fprintf(logger->fp, "%s\n", message);
     for (i = 0; i < matrix.row; ++i)
     {
         for (j = 0; j < matrix.col; ++j)
         {
             if (j == matrix.col - 1)
             {
-                fprintf(loger->log_fp, "%8.3f\n", matrix.element[i][j]);
+                fprintf(logger->fp, "%8.3f\n", matrix.element[i][j]);
             }
             else
             {
-                fprintf(loger->log_fp, "%8.3f", matrix.element[i][j]);
+                fprintf(logger->fp, "%8.3f", matrix.element[i][j]);
             }
         }
     }
 
-    fflush(loger->log_fp);
+    fflush(logger->fp);
 }

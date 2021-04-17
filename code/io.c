@@ -7,9 +7,10 @@
 #define GPS_L5_SIGNAL_NUM   (12)
 
 /* global variable */
-extern log_t loger;
-extern FILE* obs_fp_ptr;
-extern FILE* nav_fp_ptr;
+extern files_manager_t files_manager;
+extern FILE *nav_fp_ptr;
+extern FILE *obs_fp_ptr;
+
 extern const char *error_message[];
 
  static const char *L1_signal_type[GPS_L1_SIGNAL_NUM] =
@@ -121,6 +122,15 @@ static RETURN_STATUS read_opt_body(opt_file_t *opt_file, FILE *fp)
                 opt_file->end_time[i] = atoi(sub_buff);
             }
         }
+
+        if (strstr(buff, "vel_solution") != NULL)
+        {
+            strncpy(sub_buff, buff + 22, 255);
+            if (strstr(sub_buff, "yes") != NULL)
+            {
+                opt_file->vel_sol_enable = 1;
+            }
+        }
     }
 
     return RET_SUCCESS;
@@ -131,7 +141,7 @@ RETURN_STATUS read_opt_file(opt_file_t  *opt_file, char *opt_path)
     FILE *opt_fp;
     if (!(opt_fp = fopen(opt_path, "r"))) 
     {
-        if (loger.is_open)
+        if (files_manager.logger.is_open)
         {
             print_log(NULL, CANT_READ_OPT_FILE, error_message[CANT_READ_OPT_FILE]);
         }
@@ -150,7 +160,7 @@ RETURN_STATUS read_default_opt_file(opt_file_t *opt_file)
     FILE* opt_fp;
     if (!(opt_fp = fopen("..//Simple_SPP//SPP.opt", "r")))
     {
-        if (loger.is_open)
+        if (files_manager.logger.is_open)
         {
             print_log(NULL, CANT_READ_OPT_FILE, error_message[CANT_READ_OPT_FILE]);
         }
@@ -164,42 +174,52 @@ RETURN_STATUS read_default_opt_file(opt_file_t *opt_file)
     return RET_SUCCESS;
 }
 
-void open_log_file()
+void open_files()
 {
-    if (!(loger.log_fp = fopen("..//Simple_SPP//log.txt","w")))
+    if (!(files_manager.logger.fp= fopen("..//Simple_SPP//log.txt","w")))
     {
-        loger.is_open = false;
+        files_manager.logger.is_open = false;
         printf("log file open fail!\n");
     }
     else
     {
-        loger.is_open = true;
+        files_manager.logger.is_open = true;
         printf("log file open success!\n");
     }
-    
+
+    if (!(files_manager.out_pos.fp = fopen("..//Simple_SPP//reluslt.pos", "w")))
+    {
+        files_manager.out_pos.is_open = false;
+        printf("pos file open fail!\n");
+    }
+    else
+    {
+        files_manager.out_pos.is_open = true;
+        printf("pos file open success!\n");
+    }
 }
 
-void close_log_file()
+void close_files()
 {
-    if (loger.is_open)
+    if (files_manager.logger.is_open)
     {
-        fclose(loger.log_fp);
+        fclose(files_manager.logger.fp);
     }
 }
 
 void print_log(fp64 *time, error_code_t err_code, const char *message)
 {
-    if (!loger.is_open)
+    if (!files_manager.logger.is_open)
     {
         return;
     }
     if (time == NULL)
     {
-        fprintf(loger.log_fp, ",,,,,,,,,,,,Error code: %d, %s\n", err_code, message);
+        fprintf(files_manager.logger.fp, ",,,,,,,,,,,,Error code: %d, %s\n", err_code, message);
     }
     else
     {
-        fprintf(loger.log_fp, "%9.2f,,,Error code: %d, %s\n", *time, err_code, message);
+        fprintf(files_manager.logger.fp, "%9.2f,,,Error code: %d, %s\n", *time, err_code, message);
     }
 
 }

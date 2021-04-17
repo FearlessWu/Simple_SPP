@@ -15,11 +15,32 @@
 #define _SPP_SOL_H_
 
 #include "lib.h"
-#define POS_PARAM_NUM                   (3)
-#define VEL_PARAM_NUM                   (3)
-#define DTR_PARAM_NUM                   (1)
-#define DFT_PARAM_NUM                   (1)
-#define ESTIMATE_PARAM_NUM(_est_num)    {_est_num = POS_PARAM_NUM + VEL_PARAM_NUM + DTR_PARAM_NUM + DFT_PARAM_NUM;}
+#define POS_PARAM_NUM                           (3)
+#define VEL_PARAM_NUM                           (3)
+#define DTR_PARAM_NUM                           (1)
+#define DFT_PARAM_NUM                           (1)
+#define ESTIMATE_PARAM_POS_VEL_NUM(_est_num)    {_est_num = POS_PARAM_NUM + VEL_PARAM_NUM + DTR_PARAM_NUM + DFT_PARAM_NUM;}
+#define ESTIMATE_PARAM_POS_NUM(_est_num)        {_est_num = POS_PARAM_NUM + DTR_PARAM_NUM;}
+
+typedef enum
+{
+    SOL_TYPE_NONE    = 0,
+    SOL_TYPE_POS     = 1,
+    SOL_TYPE_POS_VEL = 2,
+} sol_type_t;
+
+typedef enum
+{
+    NOT_USE = 0,
+    USE     = 1
+} obs_status_t;
+
+typedef enum
+{
+    NO_OBS_FILE        = 0,
+    NO_NAV_FILE        = 1,
+    CANT_READ_OPT_FILE = 2
+} error_code_t;
 
 /* observation of a single satellite */
 typedef struct
@@ -156,6 +177,9 @@ typedef struct
     fp64  blh[3];
     fp64  rcv_time;
     fp64  ep[6];
+    uint16_t sv_used_num;
+    uint16_t est_num;    /* estimation parameters number */
+    uint8_t  sol_type;
 } spp_sol_t;
 
 typedef struct
@@ -166,21 +190,8 @@ typedef struct
     fp64    start_time[3]; // hour/min/sec
     fp64    end_time[3];
     uint8_t freq_num;
+    uint8_t vel_sol_enable;
 } opt_file_t;
-
-
-typedef enum
-{
-    NOT_USE = 0,
-    USE     = 1
-} obs_status_t;
-
-typedef enum
-{
-    NO_OBS_FILE        = 0,
-    NO_NAV_FILE        = 1,
-    CANT_READ_OPT_FILE = 2
-} error_code_t;
 
 /* error message accord to error code */
 static const char *error_message[] = {
@@ -197,10 +208,9 @@ typedef enum
 
 
 /* global variable */
-extern log_t      loger;
-extern opt_file_t opt_file;
-extern FILE      *obs_fp_ptr;
-
+opt_file_t      opt_file;
+FILE            *obs_fp_ptr;
+files_manager_t files_manager;
 /**
  *@brief        the main process root function
  *@author       wyatt.wu
