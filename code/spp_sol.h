@@ -168,6 +168,19 @@ typedef struct
 
 typedef struct
 {
+    uint8_t Q;      /*!< solution stype: spp soltuion type define as 5*/
+    fp32 sdx ;
+    fp32 sdy ;
+    fp32 sdz ;
+    fp32 sdxy ;
+    fp32 sdyz;
+    fp32 sdzx;
+    fp32 age ;
+    fp32 ratio;
+} sol_std_t;
+
+typedef struct
+{
     fp64  pos[3];       // ecef
     fp64  vel[3];       
     fp64  dtr[DTR_PARAM_NUM];
@@ -180,6 +193,7 @@ typedef struct
     uint16_t sv_used_num;
     uint16_t est_num;    /* estimation parameters number */
     uint8_t  sol_type;
+    sol_std_t sol_std;
 } spp_sol_t;
 
 typedef struct

@@ -96,7 +96,7 @@ RETURN_STATUS get_sat_pos_broadcast_eph(eph_sat_t *eph_sat, fp64 *sat_pos, fp64 
     fp64 eph_i;
     fp64 omg_tk;
     uint32_t i;
-    
+
     tk = time - *sat_clk - eph_sat->Toc;
     M  = (sqrt(GPS_GM) / (eph_sat->rootA * eph_sat->rootA * eph_sat->rootA) + eph_sat->DeltaN) * tk + eph_sat->M0;
 
@@ -756,7 +756,44 @@ static void appro_param_handle(fp64 *appro_param, uint8_t   spp_init,
 
 static void output_solution_to_file(spp_sol_t *spp_sol, fp64 *time)
 {
+    FILE *fp = files_manager.out_pos.fp;
+    /* print time */
+    fprintf(fp, "%4d/%02d/%02d %02d:%02d:%06.3f ", (int32_t)time[0], (int32_t)time[1], (int32_t)time[2],
+                                                  (int32_t)time[3], (int32_t)time[4], time[5]);
+    /* print coordinate */
+    fprintf(fp, "%14.4f %14.4f %14.4f   ", spp_sol->pos[0], spp_sol->pos[1], spp_sol->pos[2]);
 
+    /* print std */
+    fprintf(fp, "%d %3d %8.4f %8.4f %8.4f ", spp_sol->sol_std.Q,   spp_sol->sv_used_num, spp_sol->sol_std.sdx,
+                                             spp_sol->sol_std.sdy, spp_sol->sol_std.sdz);
+
+    fprintf(fp, "%8.4f %8.4f %8.4f %6.2f %6.1f\n", spp_sol->sol_std.sdxy, spp_sol->sol_std.sdyz, spp_sol->sol_std.sdzx,
+                                                   spp_sol->sol_std.age,  spp_sol->sol_std.ratio);
+
+    fflush(fp);
+
+}
+
+static void update_spp_sol(fp64 *appro_param, matrix_t *P, int32_t sv_num, spp_sol_t *spp_sol)
+{
+    uint8_t i = 0;
+    for (i = 0; i < POS_PARAM_NUM; ++i)
+    {
+        spp_sol->pos[i] = appro_param[i];
+    }
+    spp_sol->sol_std.Q = 5; /* spp solution define as 5. reference to RTKLIB */
+
+    /* update std */
+    spp_sol->sol_std.sdx  = P->element[0][0];
+    spp_sol->sol_std.sdy  = P->element[1][1];
+    spp_sol->sol_std.sdz  = P->element[2][2];
+    spp_sol->sol_std.sdxy = P->element[0][1];
+    spp_sol->sol_std.sdzx = P->element[0][2];
+    spp_sol->sol_std.sdyz = P->element[1][2];
+
+    spp_sol->sol_std.age   = 0.0f;
+    spp_sol->sol_std.ratio = 0.0f;
+    spp_sol->sv_used_num   = sv_num;
 }
 
 static RETURN_STATUS spp_proc(obs_epoch_t *obs_c, const sat_info_t *sat_info, spp_sol_t *spp_sol)
@@ -773,7 +810,7 @@ static RETURN_STATUS spp_proc(obs_epoch_t *obs_c, const sat_info_t *sat_info, sp
     fp64 *appro_param = (fp64*)malloc(sizeof(fp64) * spp_sol->est_num);
     appro_param_handle(appro_param, spp_init, obs_c->rcv_info.appro_pos, spp_sol);
 
-    for (iter_num = 0; iter_num < 20; ++iter_num)
+    for (iter_num = 0; iter_num < 4; ++iter_num)
     {
         sv_num = construct_H_R_V_matrix(obs_c, sat_info, spp_sol, &H, &R, &v, spp_init, appro_param, iter_num);
 
@@ -795,18 +832,27 @@ static RETURN_STATUS spp_proc(obs_epoch_t *obs_c, const sat_info_t *sat_info, sp
             }
         }
         
-        if ((fabs(dx.element[0][0]) < 0.1) && status)
-        {
-            break;
-        }
-        //if (norm(dx, 3) < 1e-4)
+         if ((fabs(dx.element[0][0]) < 0.1) && status)
+         {
+             spp_init = true;
+             update_spp_sol(appro_param, &P, sv_num, spp_sol);
+             break;
+         }
+        //if ((norm(dx.element, 3) < 1e-4) && status)
         //{
-        //    // TODO: ouput result
-        //    break;
+        //    spp_init = true;
+        //    update_spp_sol(appro_param, &P, sv_num, spp_sol);
+        //   break;
         //}
     }
+
+    output_solution_to_file(spp_sol, obs_c->ep);
+
     free(appro_param);
-    spp_init = true;
+    matrix_free(&H);
+    matrix_free(&R);
+    matrix_free(&v);
+    matrix_free(&P);
 
     return RET_SUCCESS;
 }
@@ -893,6 +939,7 @@ static void init_spp_sol(spp_sol_t *spp_sol, opt_file_t *opt_file)
         ESTIMATE_PARAM_POS_NUM(spp_sol->est_num);
     }
 
+    memset(&spp_sol->sol_std, 0, sizeof(sol_std_t));
 }
 RETURN_STATUS proc(opt_file_t *opt_file)
 {

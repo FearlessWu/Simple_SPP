@@ -22,6 +22,7 @@ static void output_pos_file_header(void)
     fprintf(fp,"%%  GPST                      x-ecef(m)      y-ecef(m)      z-ecef(m)   Q  ns   sdx(m)   sdy(m)   sdz(m)  sdxy(m)  sdyz(m)  sdzx(m) age(s)  ratio)\n");
     fflush(fp);
 }
+
 RETURN_STATUS main(int32_t args, char *argv[])
 
 {
